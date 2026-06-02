@@ -1386,5 +1386,89 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   box-shadow: 0 8px 24px rgba(201,165,90,.4);
 }
 
+/* Admin Booking Panel */
+.admin-bookings-section {
+  margin-top: 35px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  text-align: left;
+}
+.admin-bookings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.admin-bookings-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  margin: 0;
+}
+.admin-bookings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.admin-booking-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 20px;
+  border-radius: var(--r2);
+  transition: transform var(--t) var(--ease), border-color var(--t) var(--ease), background var(--t) var(--ease);
+}
+.admin-booking-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(201, 165, 90, 0.25);
+  background: rgba(255,255,255,0.05);
+}
+.admin-booking-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.admin-booking-client {
+  margin: 0 0 4px 0;
+  font-size: 1.05rem;
+  color: var(--white);
+  font-weight: 600;
+}
+.admin-booking-date {
+  font-size: 0.76rem;
+  color: var(--g4);
+}
+.admin-booking-actions {
+  display: flex;
+  gap: 10px;
+}
+.admin-booking-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--g3);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 12px;
+}
+.admin-booking-detail-item strong {
+  color: var(--gold);
+  display: block;
+  margin-bottom: 2px;
+}
+.admin-booking-message {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.25);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--r1) var(--r1) 0;
+  font-size: 0.8rem;
+  color: var(--g4);
+  line-height: 1.4;
+}
+
+
 
 
