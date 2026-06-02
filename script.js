@@ -733,23 +733,34 @@
       };
 
       // ── ALWAYS send WhatsApp notification to MVR Studio ──
+      const cleanBudgetVal = (budget || 'Not specified')
+        .replace(/&/g, '')
+        .replace(/₹/g, 'Rs. ')
+        .replace(/–/g, '-')
+        .replace(/[^\x20-\x7E]/g, '');
+
       const waMsg =
-        `🔔 *NEW BOOKING REQUEST — MVR Studio*\n\n` +
+        `🔔 *BOOKING CONFIRMED — MVR Studio*\n\n` +
+        `📄 *Quotation Ref:* MVR-${enquiry.id}\n` +
         `👤 *Name:* ${name}\n` +
         `📞 *Phone:* ${phone}\n` +
         `📧 *Email:* ${email || 'Not provided'}\n` +
         `🎬 *Service:* ${service}\n` +
         `📅 *Event Date:* ${date || 'Not specified'}\n` +
         `👥 *Guests:* ${guests || 'Not specified'}\n` +
-        `💰 *Budget:* ${budget || 'Not specified'}\n` +
+        `💰 *Budget:* ${cleanBudgetVal}\n` +
         `💬 *Message:* ${message || 'No message'}\n\n` +
-        `⏰ Received: ${new Date().toLocaleString('en-IN')}`;
+        `📝 _Note: Client has generated the official Quotation PDF and will attach it below._\n\n` +
+        `⏰ Confirmed: ${enquiry.timestamp}`;
 
       const waUrl = 'https://wa.me/919652341566?text=' + encodeURIComponent(waMsg);
 
       // ── Save to localStorage ──
       saveEnquiry(enquiry);
       try { localStorage.setItem('hide_booking_status', 'false'); } catch (e) {}
+
+      // ── Automatically generate and download PDF Quotation ──
+      generateQuotationPDF(enquiry);
 
       // ── Show success alert ──
       if (formOk) {
@@ -831,6 +842,22 @@
       format: 'a4'
     });
 
+    // Sanitize strings to avoid ASCII/Unicode corruption in standard PDF fonts
+    const cleanName = (booking.name || '').replace(/&/g, '').replace(/[^\x20-\x7E]/g, '');
+    const cleanPhone = (booking.phone || '').replace(/[^\x20-\x7E]/g, '');
+    const cleanEmail = (booking.email || 'Not provided').replace(/[^\x20-\x7E]/g, '');
+    const cleanService = (booking.service || '').replace(/&/g, '').replace(/[^\x20-\x7E]/g, '');
+    const cleanDate = (booking.date || 'Not specified').replace(/[^\x20-\x7E]/g, '');
+    
+    let cleanBudget = (booking.budget || 'Custom Quote')
+      .replace(/&/g, '')
+      .replace(/₹/g, 'Rs. ')
+      .replace(/–/g, '-')
+      .replace(/[^\x20-\x7E]/g, '');
+    if (!cleanBudget.includes('Rs.')) {
+      cleanBudget = cleanBudget.replace(/(\d[\d,]*)/g, 'Rs. $1');
+    }
+
     // Color Palette
     const cNavy = [8, 12, 24];     // #080c18
     const cGold = [201, 165, 90];   // #c9a55a
@@ -864,7 +891,7 @@
     doc.setFontSize(9);
     doc.setTextColor(200, 200, 200);
     doc.text(`Ref: MVR-${booking.id || Date.now()}`, 132, 26);
-    doc.text(`Date: ${booking.timestamp ? booking.timestamp.split(',')[0] : new Date().toLocaleDateString('en-IN')}`, 132, 31);
+    doc.text(`Date: ${booking.timestamp ? booking.timestamp.split(',')[0].replace(/[^\x20-\x7E]/g, '') : new Date().toLocaleDateString('en-IN')}`, 132, 31);
 
     // Business details
     doc.setTextColor(cDark[0], cDark[1], cDark[2]);
@@ -880,9 +907,9 @@
     doc.setFont('Helvetica', 'bold');
     doc.text("Quotation Prepared For:", 120, 54);
     doc.setFont('Helvetica', 'normal');
-    doc.text(`Name: ${booking.name}`, 120, 60);
-    doc.text(`Phone: ${booking.phone}`, 120, 66);
-    doc.text(`Email: ${booking.email || 'Not provided'}`, 120, 72);
+    doc.text(`Name: ${cleanName}`, 120, 60);
+    doc.text(`Phone: ${cleanPhone}`, 120, 66);
+    doc.text(`Email: ${cleanEmail}`, 120, 72);
 
     // Divider Line
     doc.setDrawColor(220, 220, 220);
@@ -905,15 +932,15 @@
     doc.setTextColor(cDark[0], cDark[1], cDark[2]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9.5);
-    doc.text(booking.service, 18, 103);
+    doc.text(cleanService, 18, 103);
     
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(booking.date || 'Not specified', 110, 103);
+    doc.text(cleanDate, 110, 103);
     
     doc.setFont('Helvetica', 'bold');
     doc.setTextColor(cGold[0], cGold[1], cGold[2]);
-    doc.text(booking.budget || 'Custom Quote', 150, 103);
+    doc.text(cleanBudget, 150, 103);
 
     // Table Bottom Line
     doc.setDrawColor(cNavy[0], cNavy[1], cNavy[2]);
