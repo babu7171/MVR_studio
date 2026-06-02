@@ -1218,8 +1218,7 @@
   }
 
   /* ══════════════════════════════════════════════════
-     ADMIN PANEL ACCESS (No Password)
-     Directly toggle the visibility of the upload panel
+     ADMIN PANEL ACCESS (Password Protected)
   ══════════════════════════════════════════════════ */
   const adminLink = document.getElementById('ftAdminLink');
   const uploadBox = document.getElementById('uploadBox');
@@ -1232,6 +1231,28 @@
   if (adminLink && uploadBox) {
     adminLink.addEventListener('click', e => {
       e.preventDefault();
+      
+      // Check session storage first so they don't have to re-enter it constantly
+      let isAuthenticated = false;
+      try {
+        isAuthenticated = sessionStorage.getItem('mvr_admin_auth') === 'true';
+      } catch (err) {}
+
+      if (!isAuthenticated) {
+        const passwordInput = prompt("🔑 Enter Admin Password:");
+        if (passwordInput === null) return; // User cancelled
+        
+        if (passwordInput === "mvr@123") {
+          try {
+            sessionStorage.setItem('mvr_admin_auth', 'true');
+          } catch (err) {}
+          isAuthenticated = true;
+        } else {
+          alert("❌ Access Denied: Incorrect password!");
+          return;
+        }
+      }
+
       if (uploadBox.style.display === 'none') {
         uploadBox.style.display = 'block';
         uploadBox.scrollIntoView({ behavior: 'smooth' });
