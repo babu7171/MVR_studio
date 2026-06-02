@@ -412,7 +412,7 @@
 
       // Send to WhatsApp to notify the brother!
       const whatsappMsg = `Hi MVR Studio! I wrote a review for you:\n\nRating: ${'★'.repeat(stars)}\nReview: "${text}"\n- ${name} (${role})`;
-      const waUrl = `https://wa.me/919738069787?text=${encodeURIComponent(whatsappMsg)}`;
+      const waUrl = `https://wa.me/919652341566?text=${encodeURIComponent(whatsappMsg)}`;
       
       alert('Thank you for your review! It has been submitted.');
       window.open(waUrl, '_blank');
@@ -753,7 +753,7 @@
         `📝 _Note: Client has generated the official Quotation PDF and will attach it below._\n\n` +
         `⏰ Confirmed: ${enquiry.timestamp}`;
 
-      const waUrl = 'https://wa.me/919738069787?text=' + encodeURIComponent(waMsg);
+      const waUrl = 'https://wa.me/919652341566?text=' + encodeURIComponent(waMsg);
 
       // ── Save to localStorage ──
       saveEnquiry(enquiry);
@@ -900,7 +900,7 @@
     doc.text("MVR Studio Hyderabad", 15, 54);
     doc.setFont('Helvetica', 'normal');
     doc.text("Near Main Market, Hyderabad, Telangana", 15, 60);
-    doc.text("Phone: +91 97380 69787", 15, 66);
+    doc.text("Phone: +91 96523 41566", 15, 66);
     doc.text("Email: info@mvrstudio.in", 15, 72);
 
     // Client details block
