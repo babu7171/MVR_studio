@@ -126,40 +126,25 @@
   const counters = document.querySelectorAll('.count-num[data-target]');
   let   counted  = false;
 
-  // Load stats from localStorage or keep defaults
-  const statsKeys = {
-    projects: 'mvr_stats_projects',
-    years: 'mvr_stats_years',
-    satisfaction: 'mvr_stats_satisfaction',
-    reviews: 'mvr_stats_reviews'
-  };
-
-  function loadSavedStats() {
+  // Load stats from backend or keep defaults
+  async function loadSavedStats() {
     if (counters.length < 4) return;
-    const savedProjects = localStorage.getItem(statsKeys.projects);
-    const savedYears = localStorage.getItem(statsKeys.years);
-    const savedSatisfaction = localStorage.getItem(statsKeys.satisfaction);
-    const savedReviews = localStorage.getItem(statsKeys.reviews);
-
-    if (savedProjects !== null) counters[0].dataset.target = savedProjects;
-    if (savedYears !== null) counters[1].dataset.target = savedYears;
-    if (savedSatisfaction !== null) counters[2].dataset.target = savedSatisfaction;
-    if (savedReviews !== null) counters[3].dataset.target = savedReviews;
-
-    // Also pre-fill the Admin Stats Form inputs if visible
-    const inputProjects = document.getElementById('inputProjects');
-    const inputYears = document.getElementById('inputYears');
-    const inputSatisfaction = document.getElementById('inputSatisfaction');
-    const inputReviews = document.getElementById('inputReviews');
-
-    if (inputProjects) inputProjects.value = counters[0].dataset.target;
-    if (inputYears) inputYears.value = counters[1].dataset.target;
-    if (inputSatisfaction) inputSatisfaction.value = counters[2].dataset.target;
-    if (inputReviews) inputReviews.value = counters[3].dataset.target;
+    try {
+      const res = await fetch('/api/stats');
+      const stats = await res.json();
+      if (stats.projects !== undefined) counters[0].dataset.target = stats.projects;
+      if (stats.years !== undefined)    counters[1].dataset.target = stats.years;
+      if (stats.satisfaction !== undefined) counters[2].dataset.target = stats.satisfaction;
+      if (stats.reviews !== undefined)    counters[3].dataset.target = stats.reviews;
+    } catch (err) {
+      console.warn('Failed to load stats from backend, using defaults');
+    }
   }
 
   // Initial load
-  loadSavedStats();
+  loadSavedStats().then(() => {
+    if (counted) animateCounters();
+  });
 
   function animateCounters() {
     counters.forEach(el => {
@@ -470,63 +455,17 @@
     });
   }
 
-  // Load any previously saved items from localStorage (these are new ones admin uploaded)
-  try {
-    const savedGallery = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
-    savedGallery.forEach(item => {
-      if (item.src && item.src.startsWith('data:')) {
-        galleryItems.push({ ...item, isNew: true });
-      }
-    });
-  } catch (e) { /* ignore */ }
-
-  // Drag and drop
-  if (dropZone) {
-    ['dragenter','dragover'].forEach(ev => {
-      dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('over'); });
-    });
-    ['dragleave','drop'].forEach(ev => {
-      dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('over'); });
-    });
-    dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
-    dropZone.addEventListener('click', e => {
-      if (!e.target.closest('#uploadTrigger') && fileInput) fileInput.click();
-    });
-  }
-  if (fileInput) {
-    fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileInput.value = ''; });
-  }
-
-  const ALLOWED_TYPES = ['image/jpeg','image/png','image/webp','image/gif',
-                         'video/mp4','video/quicktime','video/x-msvideo','video/x-matroska'];
-
-  function handleFiles(files) {
-    if (!files || !files.length) return;
-    const valid = Array.from(files).filter(f => ALLOWED_TYPES.includes(f.type) || f.type.startsWith('image/') || f.type.startsWith('video/'));
-    if (!valid.length) { alert('Please upload JPG, PNG, WEBP, GIF, MP4 or MOV files.'); return; }
-
-    if (uploadProg) uploadProg.style.display = 'flex';
-    let done = 0;
-
-    valid.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const url   = ev.target.result; // base64 data URL — persists across reloads
-        const isVid = file.type.startsWith('video/');
-        const cap   = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-        galleryItems.push({ src: url, type: isVid ? 'video' : 'photo', cap, isNew: true });
-        done++;
-        const pct = Math.round((done / valid.length) * 100);
-        if (upFill)  upFill.style.width = pct + '%';
-        if (upLabel) upLabel.textContent = `Loaded ${done} / ${valid.length}`;
-        if (done === valid.length) {
-          setTimeout(() => { if (uploadProg) uploadProg.style.display = 'none'; }, 900);
-          applyFilter(activeFilter);
-          saveToStorage();
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+  // Load custom saved items from backend database
+  async function loadCustomGallery() {
+    try {
+      const res = await fetch('/api/gallery');
+      const items = await res.json();
+      items.forEach(item => {
+        galleryItems.push(item);
+      });
+    } catch (err) {
+      console.warn('Failed to load custom gallery from backend');
+    }
   }
 
   /* ══════════════════════════════════════════════════
@@ -575,18 +514,36 @@
           <span class="gi-cap">${item.cap}</span>
         </div>
       </div>
-      ${item.isNew ? '<button class="gal-del" title="Remove">✕</button>' : ''}
+      ${(item.isNew && sessionStorage.getItem('mvr_admin_auth') === 'true') ? '<button class="gal-del" title="Remove">✕</button>' : ''}
     `;
 
-    // Remove button
-    if (item.isNew) {
-      div.querySelector('.gal-del').addEventListener('click', e => {
-        e.stopPropagation();
-        const idx = galleryItems.findIndex(g => g.src === item.src);
-        if (idx !== -1) { URL.revokeObjectURL(galleryItems[idx].src); galleryItems.splice(idx, 1); }
-        applyFilter(activeFilter);
-        saveToStorage();
-      });
+    // Remove button (if logged in as admin)
+    if (item.isNew && sessionStorage.getItem('mvr_admin_auth') === 'true') {
+      const delBtn = div.querySelector('.gal-del');
+      if (delBtn) {
+        delBtn.addEventListener('click', async e => {
+          e.stopPropagation();
+          if (confirm("Are you sure you want to delete this gallery item?")) {
+            try {
+              const res = await fetch(`/api/gallery/${item.id}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': sessionStorage.getItem('mvr_admin_auth_token') || ''
+                }
+              });
+              if (res.ok) {
+                const idx = galleryItems.findIndex(g => g.id === item.id);
+                if (idx !== -1) galleryItems.splice(idx, 1);
+                applyFilter(activeFilter);
+              } else {
+                alert('Failed to delete item from server.');
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          }
+        });
+      }
     }
 
     // Click to open lightbox
@@ -656,7 +613,9 @@
   });
 
   // Init gallery
-  applyFilter('all');
+  loadCustomGallery().then(() => {
+    applyFilter('all');
+  });
 
   /* ══════════════════════════════════════════════════
      CONTACT FORM — with EmailJS + localStorage storage
@@ -776,30 +735,26 @@
       // Update personalized status card
       checkBookingStatus();
 
-      // ── Send Email via FormSubmit ──
+      // ── Send Booking to Backend Database & Trigger Emails ──
       try {
-        await fetch(`https://formsubmit.co/ajax/${STUDIO_EMAIL}`, {
+        await fetch('/api/bookings', {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            _subject: `🔔 NEW BOOKING REQUEST: ${name} (${service})`,
-            _autoresponse: `Thank you for booking with MVR Studio! We have received your booking request for ${service} on ${date}. We will contact you at ${phone} within 2 hours to confirm details.`,
-            Name: name,
-            Phone: phone,
+            name,
+            phone: cleanPhone,
             email: email || '',
-            Service: service,
-            "Event Date": date || 'Not specified',
-            Guests: guests || 'Not specified',
-            Budget: budget || 'Not specified',
-            Message: message || 'No message',
-            _honey: ""
+            service,
+            date: date || '',
+            guests: guests ? parseInt(guests, 10) : null,
+            budget: budget || '',
+            message: message || ''
           })
         });
       } catch (err) {
-        console.error('Email error:', err);
+        console.error('Backend booking error:', err);
       }
 
       // Restore form button state
