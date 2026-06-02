@@ -775,6 +775,7 @@
           },
           body: JSON.stringify({
             _subject: `🔔 NEW BOOKING REQUEST: ${name} (${service})`,
+            _autoresponse: `Thank you for booking with MVR Studio! We have received your booking request for ${service} on ${date}. We will contact you at ${phone} within 2 hours to confirm details.`,
             Name: name,
             Phone: phone,
             email: email || '',
