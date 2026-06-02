@@ -817,6 +817,161 @@
     });
   }
 
+  // ── PDF Quotation Generator ──
+  function generateQuotationPDF(booking) {
+    if (!window.jspdf) {
+      alert("PDF library is still loading. Please try again in a few seconds.");
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Color Palette
+    const cNavy = [8, 12, 24];     // #080c18
+    const cGold = [201, 165, 90];   // #c9a55a
+    const cDark = [51, 51, 51];     // #333333
+
+    // Header Navy Block
+    doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
+    doc.rect(0, 0, 210, 42, 'F');
+
+    // Header Gold Line
+    doc.setFillColor(cGold[0], cGold[1], cGold[2]);
+    doc.rect(0, 42, 210, 2, 'F');
+
+    // Header Text
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text("MVR STUDIO", 15, 18);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(cGold[0], cGold[1], cGold[2]);
+    doc.text("INDIAN WEDDING & EVENTS PHOTOGRAPHY", 15, 24);
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('Helvetica', 'bold');
+    doc.text("ESTIMATED QUOTATION", 132, 20);
+
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(200, 200, 200);
+    doc.text(`Ref: MVR-${booking.id || Date.now()}`, 132, 26);
+    doc.text(`Date: ${booking.timestamp ? booking.timestamp.split(',')[0] : new Date().toLocaleDateString('en-IN')}`, 132, 31);
+
+    // Business details
+    doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+    doc.setFontSize(10);
+    doc.setFont('Helvetica', 'bold');
+    doc.text("MVR Studio Hyderabad", 15, 54);
+    doc.setFont('Helvetica', 'normal');
+    doc.text("Near Main Market, Hyderabad, Telangana", 15, 60);
+    doc.text("Phone: +91 96523 41566", 15, 66);
+    doc.text("Email: info@mvrstudio.in", 15, 72);
+
+    // Client details block
+    doc.setFont('Helvetica', 'bold');
+    doc.text("Quotation Prepared For:", 120, 54);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(`Name: ${booking.name}`, 120, 60);
+    doc.text(`Phone: ${booking.phone}`, 120, 66);
+    doc.text(`Email: ${booking.email || 'Not provided'}`, 120, 72);
+
+    // Divider Line
+    doc.setDrawColor(220, 220, 220);
+    doc.line(15, 80, 195, 80);
+
+    // Table Header
+    doc.setFillColor(cNavy[0], cNavy[1], cNavy[2]);
+    doc.rect(15, 88, 180, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text("SERVICE DESCRIPTION", 18, 93);
+    doc.text("PREFERRED DATE", 110, 93);
+    doc.text("ESTIMATED BUDGET", 150, 93);
+
+    // Table Body Row
+    doc.setFillColor(248, 248, 250);
+    doc.rect(15, 96, 180, 12, 'F');
+    
+    doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text(booking.service, 18, 103);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(booking.date || 'Not specified', 110, 103);
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(cGold[0], cGold[1], cGold[2]);
+    doc.text(booking.budget || 'Custom Quote', 150, 103);
+
+    // Table Bottom Line
+    doc.setDrawColor(cNavy[0], cNavy[1], cNavy[2]);
+    doc.line(15, 108, 195, 108);
+
+    // Note Section
+    doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text("Note:", 15, 125);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.text("* This is an estimated price range. Final quotation will be provided after discussing exact timeline and details.", 15, 131);
+    doc.text("* Includes professional editing, high-resolution digital delivery, and professional equipment setup.", 15, 136);
+
+    // Standard Booking Terms
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(cNavy[0], cNavy[1], cNavy[2]);
+    doc.text("Standard Booking Terms & Conditions:", 15, 150);
+
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+    
+    const terms = [
+      "1. Date Reservation: A 30% non-refundable advance payment is required to secure your booking date.",
+      "2. Travel & Logistics: For events outside Hyderabad, travel and accommodation charges shall be covered by client.",
+      "3. Raw Files: Raw unedited files remain copyright of MVR Studio and are delivered upon request.",
+      "4. Delivery Timeline: High-resolution edited photos will be delivered via online gallery within 7-15 working days.",
+      "5. Balance Payment: The remaining 70% balance must be cleared on or before the day of the main event."
+    ];
+
+    let y = 157;
+    terms.forEach(term => {
+      doc.text(term, 15, y);
+      y += 6.5;
+    });
+
+    // Thank you message
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(cGold[0], cGold[1], cGold[2]);
+    doc.text("Thank you for choosing MVR Studio to capture your beautiful memories!", 15, y + 12);
+
+    // Signature Block
+    doc.setDrawColor(200, 200, 200);
+    doc.line(140, y + 30, 190, y + 30);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Authorized Signature", 148, y + 34);
+    doc.text("MVR Studio Team", 153, y + 38);
+
+    // Save PDF
+    doc.save(`MVR_Studio_Quotation_${booking.id || Date.now()}.pdf`);
+  }
+
   // ── Check last booking status on this browser ──
   function checkBookingStatus() {
     const statusPanel = document.getElementById('bookingStatusPanel');
@@ -847,13 +1002,22 @@
         <p style="font-size: 0.8rem; color: var(--g4); margin-bottom: 20px; font-style: italic;">
           * We will contact you at <strong>${latest.phone}</strong> within 2 hours.
         </p>
-        <div class="bsc-actions">
+        <div class="bsc-actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn-download-pdf" id="btnDownloadPdf">📄 Download Quotation PDF</button>
           <button type="button" class="btn-new-booking" id="btnNewBooking">Book Another Event</button>
         </div>
+        <p style="font-size: 0.76rem; color: var(--g4); margin-top: 15px; border-top: 1px solid rgba(255,255,255,.05); padding-top: 12px; display: flex; align-items: center; gap: 6px;">
+          💡 <span>Tip: You can attach the downloaded PDF to your WhatsApp message to share it with MVR Studio.</span>
+        </p>
       `;
 
       bookingForm.style.display = 'none';
       statusPanel.style.display = 'block';
+
+      const btnDownload = document.getElementById('btnDownloadPdf');
+      if (btnDownload) {
+        btnDownload.addEventListener('click', () => generateQuotationPDF(latest));
+      }
 
       const btnNew = document.getElementById('btnNewBooking');
       if (btnNew) {
