@@ -310,56 +310,7 @@
       <p class="sdesc">A curated selection of moments we've had the privilege to capture.</p>
     </div>
 
-    <!-- Upload Zone -->
-    <div class="upload-box rv" id="uploadBox">
-      <div class="upload-drop" id="dropZone">
-        <div class="ud-icon">📁</div>
-        <h3>Upload Your Photos &amp; Videos</h3>
-        <p>Drag &amp; drop files or click to browse your computer</p>
-        <p class="ud-note">JPG · PNG · WEBP · GIF · MP4 · MOV · AVI</p>
-        <label for="fileInput" class="btn-gold" id="uploadTrigger">Choose Files</label>
-        <input type="file" id="fileInput" multiple accept="image/*,video/*" hidden/>
-      </div>
-      <div class="upload-prog" id="uploadProg" style="display:none">
-        <div class="up-bar" id="upBar"><div class="up-fill" id="upFill"></div></div>
-        <span id="upLabel">Loading…</span>
-      </div>
 
-      <!-- Admin Booking List -->
-      <div class="admin-bookings-section">
-        <div class="admin-bookings-header">
-          <h3 class="admin-bookings-title">📅 Booking Requests (Admin Only)</h3>
-          <button id="btnClearAllBookings" class="btn-ghost" style="padding: 5px 12px; font-size: 0.8rem; border-color: rgba(255,82,82,0.4); color: #ff5252; cursor: pointer; border-radius: var(--r1); display: none;">Clear All</button>
-        </div>
-        <div id="adminBookingsList" class="admin-bookings-list">
-          <!-- Dynamically populated -->
-        </div>
-      </div>
-
-      <!-- Edit Stats Form (Admin only, inside upload-box) -->
-      <div class="admin-stats-edit" style="margin-top: 30px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,.08); text-align: left;">
-        <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--gold); margin-bottom: 15px; text-align: center;">⚙️ Edit Website Counters</h3>
-        <form id="adminStatsForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: flex-end;">
-          <div class="fg" style="margin:0;">
-            <label for="inputProjects" style="display: block; font-size: .8rem; color: var(--g2); margin-bottom: 5px;">Projects Done *</label>
-            <input type="number" id="inputProjects" required style="width:100%; padding:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:var(--r1); color:var(--white); outline:none;"/>
-          </div>
-          <div class="fg" style="margin:0;">
-            <label for="inputYears" style="display: block; font-size: .8rem; color: var(--g2); margin-bottom: 5px;">Years Experience *</label>
-            <input type="number" id="inputYears" required style="width:100%; padding:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:var(--r1); color:var(--white); outline:none;"/>
-          </div>
-          <div class="fg" style="margin:0;">
-            <label for="inputSatisfaction" style="display: block; font-size: .8rem; color: var(--g2); margin-bottom: 5px;">Client Satisfaction (%) *</label>
-            <input type="number" id="inputSatisfaction" required style="width:100%; padding:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:var(--r1); color:var(--white); outline:none;"/>
-          </div>
-          <div class="fg" style="margin:0;">
-            <label for="inputReviews" style="display: block; font-size: .8rem; color: var(--g2); margin-bottom: 5px;">5-Star Reviews *</label>
-            <input type="number" id="inputReviews" required style="width:100%; padding:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:var(--r1); color:var(--white); outline:none;"/>
-          </div>
-          <button type="submit" class="btn-gold" style="padding: 10px 20px; border-radius: var(--r1); border:none; font-weight:700; cursor:pointer; height:42px;">Save Stats</button>
-        </form>
-      </div>
-    </div>
 
     <!-- Filters -->
     <div class="gal-filters rv">
@@ -798,7 +749,7 @@
     </div>
     <div class="ft-bottom">
       <p>© 2026 <strong>MVR Studio</strong>. All Rights Reserved.</p>
-      <a href="#admin" class="ft-admin-link" id="ftAdminLink">Admin Panel</a>
+      <a href="admin.html" class="ft-admin-link" id="ftAdminLink" target="_blank">Admin Panel</a>
     </div>
   </div>
 </footer>
