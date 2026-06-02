@@ -306,6 +306,9 @@
           <h3 style="margin: 0;">Active Enquiries &amp; Bookings</h3>
           <button id="btnClearAll" class="btn-ghost" style="border-color: rgba(255,82,82,0.3); color: #ff5252; padding: 6px 15px; font-size: 0.82rem; border-radius: var(--r1); cursor: pointer;">Delete All Booking Requests</button>
         </div>
+        <p style="font-size: 0.85rem; color: var(--g3); margin-top: -10px; margin-bottom: 25px;">
+          💡 <strong>Notice:</strong> Customer bookings are forwarded instantly to your email (<strong>info@mvrstudio.in</strong>) and to your WhatsApp (<strong>+91 96523 41566</strong>). The list below shows entries saved on this browser's local memory for reference.
+        </p>
         <div id="adminBookingsContainer" class="admin-bookings-list">
           <!-- Dynamically populated -->
         </div>
@@ -316,6 +319,9 @@
     <div id="tab-gallery" class="admin-tab-content" style="display: none;">
       <div class="admin-panel-card">
         <h3>Manage Gallery &amp; Upload Works</h3>
+        <p style="font-size: 0.85rem; color: var(--g3); margin-top: -10px; margin-bottom: 20px;">
+          ⚠️ <strong>Notice:</strong> Since this website is hosted statically on GitHub Pages, photos/videos uploaded here will only store in your local browser's memory. To permanently add new media to the public gallery, upload files directly to your GitHub repository and reference them in <code>index.html</code>.
+        </p>
         <div class="upload-drop" id="adminDropZone" style="padding: 40px; border: 2px dashed rgba(255,255,255,0.15); border-radius: var(--r3); text-align: center; cursor: pointer; transition: all 0.3s ease;">
           <div class="ud-icon" style="font-size: 2.5rem; margin-bottom: 10px;">📁</div>
           <h3 style="font-size: 1.2rem; color: var(--white); margin: 0 0 5px 0;">Drag &amp; Drop Photos or Videos</h3>
@@ -342,7 +348,10 @@
     <div id="tab-stats" class="admin-tab-content" style="display: none;">
       <div class="admin-panel-card">
         <h3>Edit Home Page Website Counters</h3>
-        <p style="font-size: 0.85rem; color: var(--g3); margin-top: -10px; margin-bottom: 30px;">Update the numbers that are animated on the home page hero section.</p>
+        <p style="font-size: 0.85rem; color: var(--g3); margin-top: -10px; margin-bottom: 30px;">
+          Update the numbers that are animated on the homepage hero section.<br/>
+          💡 <strong>Notice:</strong> Changes made here only apply to this browser for testing. To update these numbers permanently for all visitors globally, please edit the <code>data-target</code> attributes (e.g. search for <code>count-num</code>) in your <code>index.html</code> file on GitHub.
+        </p>
         <form id="adminCountersForm" style="max-width: 600px; display: flex; flex-direction: column; gap: 20px;">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="fg">

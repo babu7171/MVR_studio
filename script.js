@@ -126,25 +126,29 @@
   const counters = document.querySelectorAll('.count-num[data-target]');
   let   counted  = false;
 
-  // Load stats from backend or keep defaults
-  async function loadSavedStats() {
+  // Load stats from localStorage or keep defaults
+  const statsKeys = {
+    projects: 'mvr_stats_projects',
+    years: 'mvr_stats_years',
+    satisfaction: 'mvr_stats_satisfaction',
+    reviews: 'mvr_stats_reviews'
+  };
+
+  function loadSavedStats() {
     if (counters.length < 4) return;
-    try {
-      const res = await fetch('/api/stats');
-      const stats = await res.json();
-      if (stats.projects !== undefined) counters[0].dataset.target = stats.projects;
-      if (stats.years !== undefined)    counters[1].dataset.target = stats.years;
-      if (stats.satisfaction !== undefined) counters[2].dataset.target = stats.satisfaction;
-      if (stats.reviews !== undefined)    counters[3].dataset.target = stats.reviews;
-    } catch (err) {
-      console.warn('Failed to load stats from backend, using defaults');
-    }
+    const savedProjects = localStorage.getItem(statsKeys.projects);
+    const savedYears = localStorage.getItem(statsKeys.years);
+    const savedSatisfaction = localStorage.getItem(statsKeys.satisfaction);
+    const savedReviews = localStorage.getItem(statsKeys.reviews);
+
+    if (savedProjects !== null) counters[0].dataset.target = savedProjects;
+    if (savedYears !== null) counters[1].dataset.target = savedYears;
+    if (savedSatisfaction !== null) counters[2].dataset.target = savedSatisfaction;
+    if (savedReviews !== null) counters[3].dataset.target = savedReviews;
   }
 
   // Initial load
-  loadSavedStats().then(() => {
-    if (counted) animateCounters();
-  });
+  loadSavedStats();
 
   function animateCounters() {
     counters.forEach(el => {
@@ -455,16 +459,17 @@
     });
   }
 
-  // Load custom saved items from backend database
-  async function loadCustomGallery() {
+  // Load custom saved items from localStorage (uploaded locally by admin)
+  function loadCustomGallery() {
     try {
-      const res = await fetch('/api/gallery');
-      const items = await res.json();
+      const items = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
       items.forEach(item => {
-        galleryItems.push(item);
+        if (item.src && item.src.startsWith('data:')) {
+          galleryItems.push({ ...item, isNew: true });
+        }
       });
     } catch (err) {
-      console.warn('Failed to load custom gallery from backend');
+      console.warn('Failed to load custom gallery from localStorage');
     }
   }
 
@@ -521,23 +526,18 @@
     if (item.isNew && sessionStorage.getItem('mvr_admin_auth') === 'true') {
       const delBtn = div.querySelector('.gal-del');
       if (delBtn) {
-        delBtn.addEventListener('click', async e => {
+        delBtn.addEventListener('click', e => {
           e.stopPropagation();
           if (confirm("Are you sure you want to delete this gallery item?")) {
             try {
-              const res = await fetch(`/api/gallery/${item.id}`, {
-                method: 'DELETE',
-                headers: {
-                  'Authorization': sessionStorage.getItem('mvr_admin_auth_token') || ''
-                }
-              });
-              if (res.ok) {
-                const idx = galleryItems.findIndex(g => g.id === item.id);
-                if (idx !== -1) galleryItems.splice(idx, 1);
-                applyFilter(activeFilter);
-              } else {
-                alert('Failed to delete item from server.');
-              }
+              let stored = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
+              stored = stored.filter(g => g.src !== item.src);
+              localStorage.setItem('mvr_gallery', JSON.stringify(stored));
+              
+              const idx = galleryItems.findIndex(g => g.src === item.src);
+              if (idx !== -1) galleryItems.splice(idx, 1);
+              
+              applyFilter(activeFilter);
             } catch (err) {
               console.error(err);
             }
@@ -613,9 +613,8 @@
   });
 
   // Init gallery
-  loadCustomGallery().then(() => {
-    applyFilter('all');
-  });
+  loadCustomGallery();
+  applyFilter('all');
 
   /* ══════════════════════════════════════════════════
      CONTACT FORM — with EmailJS + localStorage storage
@@ -735,26 +734,30 @@
       // Update personalized status card
       checkBookingStatus();
 
-      // ── Send Booking to Backend Database & Trigger Emails ──
+      // ── Send Email via FormSubmit ──
       try {
-        await fetch('/api/bookings', {
+        await fetch(`https://formsubmit.co/ajax/${STUDIO_EMAIL}`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept": "application/json"
           },
           body: JSON.stringify({
-            name,
-            phone: cleanPhone,
+            _subject: `🔔 NEW BOOKING REQUEST: ${name} (${service})`,
+            _autoresponse: `Thank you for booking with MVR Studio! We have received your booking request for ${service} on ${date}. We will contact you at ${phone} within 2 hours to confirm details.`,
+            Name: name,
+            Phone: phone,
             email: email || '',
-            service,
-            date: date || '',
-            guests: guests ? parseInt(guests, 10) : null,
-            budget: budget || '',
-            message: message || ''
+            Service: service,
+            "Event Date": date || 'Not specified',
+            Guests: guests || 'Not specified',
+            Budget: cleanBudgetVal,
+            Message: message || 'No message',
+            _honey: ""
           })
         });
       } catch (err) {
-        console.error('Backend booking error:', err);
+        console.error('FormSubmit email error:', err);
       }
 
       // Restore form button state
