@@ -273,6 +273,7 @@
     const uploadCaptionInput = document.getElementById('uploadCaption');
     const uploadCategorySelect = document.getElementById('uploadCategory');
     const syncToGithubCheck = document.getElementById('syncToGithub');
+    const adminFilterCategorySelect = document.getElementById('adminFilterCategory');
 
     if (!previewContainer) return;
 
@@ -381,18 +382,25 @@
     }
 
     function renderGalleryPreview() {
-      const items = ghToken && syncToGithubCheck && syncToGithubCheck.checked ? githubItems : getGallery();
+      const fullList = ghToken && syncToGithubCheck && syncToGithubCheck.checked ? githubItems : getGallery();
+      let displayItems = [...fullList];
 
-      if (items.length === 0) {
+      const selectedFilter = adminFilterCategorySelect ? adminFilterCategorySelect.value : 'all';
+      if (selectedFilter !== 'all') {
+        displayItems = displayItems.filter(item => item.category === selectedFilter);
+      }
+
+      if (displayItems.length === 0) {
         previewContainer.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(255,255,255,0.01); border: 1px dashed rgba(255,255,255,0.08); border-radius: var(--r2); color: var(--g3); font-size: 0.85rem;">
-            No custom uploaded images/videos. Upload files using the dropzone above!
+            No uploaded items found under this filter category.
           </div>
         `;
         return;
       }
 
-      previewContainer.innerHTML = items.map((item, idx) => {
+      previewContainer.innerHTML = displayItems.map((item) => {
+        const originalIndex = fullList.findIndex(x => x.src === item.src);
         const mediaHTML = item.type === 'video'
           ? `<video src="${item.src}" muted playsinline preload="metadata"></video>`
           : `<img src="${item.src}" alt="${item.cap || ''}"/>`;
@@ -404,7 +412,7 @@
         return `
           <div class="admin-gal-card">
             ${mediaHTML}
-            <button onclick="window.deleteGalleryItem(${idx})" class="admin-gal-del" title="Remove Item">✕</button>
+            <button onclick="window.deleteGalleryItem(${originalIndex})" class="admin-gal-del" title="Remove Item">✕</button>
             <div class="admin-gal-info" style="display:flex; justify-content:space-between; align-items:center; gap:5px; bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85));">
               <span style="overflow:hidden; text-overflow:ellipsis; max-width: 65%;">${item.cap || 'MVR Work'}</span>
               <span style="font-size: 0.58rem; padding: 1px 4px; border-radius: 4px; border: 1px solid ${badgeColor}; color: ${badgeColor}; font-weight:700;">${badgeText}</span>
@@ -711,6 +719,10 @@
           reader.readAsDataURL(file);
         });
       }
+    }
+
+    if (adminFilterCategorySelect) {
+      adminFilterCategorySelect.addEventListener('change', renderGalleryPreview);
     }
 
     // Initial load
