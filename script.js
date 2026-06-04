@@ -817,8 +817,24 @@
 
       // Check if custom budget is loaded from gallery_db.json
       if (window.customBudgetsDb && window.customBudgetsDb[val]) {
-        fBudget.value = window.customBudgetsDb[val];
-        return;
+        const customVal = window.customBudgetsDb[val];
+        if (customVal) {
+          let exists = false;
+          for (let i = 0; i < fBudget.options.length; i++) {
+            if (fBudget.options[i].value === customVal) {
+              exists = true;
+              break;
+            }
+          }
+          if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = customVal;
+            opt.textContent = customVal;
+            fBudget.appendChild(opt);
+          }
+          fBudget.value = customVal;
+          return;
+        }
       }
 
       // Default budget mapping

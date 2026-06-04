@@ -941,14 +941,14 @@
     function renderServicesInputs(servicesList) {
       const listToRender = (servicesList && servicesList.length > 0) ? servicesList : DEFAULT_SERVICES_FALLBACK;
       
+      const datalistHTML = `
+        <datalist id="budgetRanges">
+          ${BUDGET_OPTIONS.map(opt => `<option value="${opt}"></option>`).join('')}
+        </datalist>
+      `;
+
       container.innerHTML = listToRender.map((svc, index) => {
         const currentBudget = svc.budget || '';
-        
-        const optionsHTML = BUDGET_OPTIONS.map(opt => {
-          const selectedAttr = (opt === currentBudget) ? 'selected' : '';
-          return `<option value="${opt}" ${selectedAttr}>${opt}</option>`;
-        }).join('');
-        
         const svcId = 'svc_' + svc.id;
         
         return `
@@ -976,14 +976,11 @@
             
             <div class="fg">
               <label style="display:block; font-size:0.75rem; color:var(--g3); margin-bottom:4px;">Default Budget Range</label>
-              <select class="svc-edit-budget" style="width:100%; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); font-size:0.85rem; outline:none; cursor:pointer;">
-                <option value="">Select range…</option>
-                ${optionsHTML}
-              </select>
+              <input type="text" list="budgetRanges" class="svc-edit-budget" value="${currentBudget}" placeholder="e.g. ₹50,000 – ₹1,00,000 or custom amount" style="width:100%; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); font-size:0.85rem; outline:none;"/>
             </div>
           </div>
         `;
-      }).join('');
+      }).join('') + datalistHTML;
     }
  
     async function loadBudgets() {
