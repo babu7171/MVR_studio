@@ -1222,6 +1222,7 @@
         icon: svc.icon,
         title: svc.name,
         desc: svc.desc,
+        budget: svc.budget,
         photos: svc.photos || []
       };
     });
@@ -1285,7 +1286,12 @@
     if (!data) return;
     document.getElementById('gmIcon').textContent  = data.icon;
     document.getElementById('gmTitle').textContent = data.title;
-    document.getElementById('gmDesc').textContent  = data.desc;
+    
+    let descHTML = data.desc || '';
+    if (data.budget) {
+      descHTML += '<br/><span style="color: var(--gold); font-weight: 700; display: inline-block; margin-top: 8px; font-size: 0.92rem;">💰 Default Budget: ' + data.budget + '</span>';
+    }
+    document.getElementById('gmDesc').innerHTML  = descHTML;
     const grid = document.getElementById('gmGrid');
     grid.innerHTML = '';
 

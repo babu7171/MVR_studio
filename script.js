@@ -484,6 +484,9 @@
           if (data.budgets) {
             window.customBudgetsDb = data.budgets;
           }
+          if (Array.isArray(data.services) && typeof window.initDynamicServices === 'function') {
+            window.initDynamicServices(data.services);
+          }
           if (Array.isArray(data.gallery)) {
             // Store in a global variable for index.html's openGallery to access
             window.customGalleryDb = data.gallery;
