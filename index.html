@@ -1309,7 +1309,7 @@
     try {
       const localItems = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
       localItems.forEach(function(item) {
-        if (item.category === key && item.src) {
+        if (item.category === key && item.src && item.src.startsWith('data:')) {
           combinedPhotos.push({ src: item.src, cap: item.cap || 'MVR Work' });
         }
       });
