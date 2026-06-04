@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Photography Services | MVR Studio</title>
+  <meta name="description" content="Explore MVR Studio's complete range of professional photography and videography services in Hyderabad — wedding, pre-wedding, events, portraits and more."/>
+  <link rel="icon" href="logo.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css?v=1.3"/>
+  <style>
+    :root {
+      --navy:  #080c18;
+      --navyd:#0d1225;
+      --gold:  #c9a55a;
+      --goldd: #b8913e;
+      --white: #f5f0e8;
+      --g2: rgba(245,240,232,.85);
+      --g3: rgba(245,240,232,.55);
+      --g4: rgba(245,240,232,.35);
+      --r1: 8px;
+      --r2: 14px;
+      --r3: 20px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── TOP NAV ── */
+    .svc-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,12,24,.92);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(201,165,90,.15);
+      padding: 0 28px;
+    }
+    .svc-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+      gap: 20px;
+    }
+    .svc-nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .svc-nav-logo img { width: 38px; height: 38px; object-fit: contain; }
+    .svc-nav-logo em { color: var(--gold); font-style: italic; font-weight: 400; }
+    .svc-nav-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 20px;
+      border: 1px solid rgba(201,165,90,.3);
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--gold);
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-back:hover { background: rgba(201,165,90,.08); border-color: var(--gold); }
+    .btn-book-now {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 22px;
+      background: linear-gradient(135deg, var(--gold), var(--goldd));
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--navy);
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-book-now:hover { box-shadow: 0 4px 20px rgba(201,165,90,.35); transform: translateY(-1px); }
+
+    /* ── HERO HEADER ── */
+    .svc-page-hero {
+      background: linear-gradient(180deg, rgba(8,12,24,0) 0%, var(--navy) 100%),
+                  linear-gradient(135deg, #0d1225 0%, #12182e 50%, #0d1225 100%);
+      padding: 70px 28px 50px;
+      text-align: center;
+      border-bottom: 1px solid rgba(201,165,90,.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .svc-page-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(201,165,90,.08) 0%, transparent 70%);
+    }
+    .svc-page-hero .stag {
+      display: inline-block;
+      font-size: 0.72rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid rgba(201,165,90,.3);
+      padding: 5px 16px;
+      border-radius: 50px;
+      margin-bottom: 18px;
+    }
+    .svc-page-hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .svc-page-hero h1 em { color: var(--gold); font-style: italic; }
+    .svc-page-hero p {
+      font-size: 1rem;
+      color: var(--g3);
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.65;
+      position: relative;
+    }
+
+    /* ── SERVICES GRID ── */
+    .svc-page-body {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 28px 80px;
+    }
+    .svc-category-label {
+      font-size: 0.7rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(201,165,90,.15);
+    }
+    .svc-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 18px;
+      margin-bottom: 50px;
+    }
+
+    /* ── TILE CARD ── */
+    .svc-tile {
+      position: relative;
+      border-radius: var(--r2);
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      aspect-ratio: 4 / 3.2;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,.35);
+    }
+    .svc-tile:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 36px rgba(0,0,0,.5);
+    }
+    .svc-tile-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: transform 0.5s ease;
+    }
+    .svc-tile:hover .svc-tile-bg { transform: scale(1.08); }
+    .svc-tile-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.2) 55%, rgba(0,0,0,.05) 100%);
+      transition: background 0.3s;
+    }
+    .svc-tile:hover .svc-tile-overlay {
+      background: linear-gradient(to top, rgba(0,0,0,.8) 0%, rgba(0,0,0,.3) 55%, rgba(0,0,0,.1) 100%);
+    }
+    .svc-tile-icon {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 38px;
+      height: 38px;
+      background: rgba(255,255,255,.12);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .svc-tile-body {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 14px 16px;
+    }
+    .svc-tile-name {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+    .svc-tile-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--gold);
+      opacity: 0;
+      transform: translateY(4px);
+      transition: all 0.25s;
+    }
+    .svc-tile:hover .svc-tile-cta {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .svc-tile-cta svg { transition: transform 0.2s; }
+    .svc-tile:hover .svc-tile-cta svg { transform: translateX(3px); }
+
+    /* Colour variants */
+    .svc-tile.blue .svc-tile-bg  { background-color: #1a6da0; }
+    .svc-tile.gold .svc-tile-bg  { background-color: #c9851a; }
+    .svc-tile.teal .svc-tile-bg  { background-color: #1a8a8a; }
+
+    /* Gradient fallback tints overlaying the bg color so tiles always look good */
+    .svc-tile.blue  { background: linear-gradient(135deg, #1565c0, #0288d1); }
+    .svc-tile.gold  { background: linear-gradient(135deg, #e65100, #f57c00); }
+    .svc-tile.teal  { background: linear-gradient(135deg, #00838f, #006064); }
+    .svc-tile.purple{ background: linear-gradient(135deg, #6a1b9a, #8e24aa); }
+    .svc-tile.green { background: linear-gradient(135deg, #2e7d32, #43a047); }
+    .svc-tile.rose  { background: linear-gradient(135deg, #ad1457, #d81b60); }
+
+    /* ── BOTTOM STRIP ── */
+    .svc-page-footer {
+      background: var(--navyd);
+      border-top: 1px solid rgba(201,165,90,.1);
+      padding: 30px 28px;
+      text-align: center;
+    }
+    .svc-page-footer p {
+      font-size: 0.82rem;
+      color: var(--g4);
+      margin-bottom: 14px;
+    }
+    .svc-footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+    .svc-footer-links a {
+      font-size: 0.8rem;
+      color: var(--g3);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .svc-footer-links a:hover { color: var(--gold); }
+
+    @media (max-width: 600px) {
+      .svc-tile-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .svc-page-body { padding: 40px 16px 60px; }
+      .svc-nav-inner { padding: 0; }
+      .btn-back span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="svc-nav">
+  <div class="svc-nav-inner">
+    <a href="index.html" class="svc-nav-logo">
+      <img src="logo.png" alt="MVR Studio"/>
+      <span>MVR <em>Studio</em></span>
+    </a>
+    <div class="svc-nav-actions">
+      <a href="index.html" class="btn-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        <span>Back to Home</span>
+      </a>
+      <a href="index.html#contact" class="btn-book-now">📅 Book Now</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO HEADER -->
+<div class="svc-page-hero">
+  <div class="stag">✦ &nbsp; Photography Services &nbsp; ✦</div>
+  <h1>Services Offered by <em>MVR Studio</em></h1>
+  <p>Here is just a glimpse of what we can offer you! Click any service to view our portfolio photos.</p>
+</div>
+
+<!-- SERVICES BODY -->
+<div class="svc-page-body">
+
+  <!-- Wedding & Ceremonies -->
+  <div class="svc-category-label">Wedding &amp; Ceremonies</div>
+  <div class="svc-tile-grid">
+
+    <a href="gallery.html?service=wedding" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-wedding.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">💍</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Wedding Photographers</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=prewedding" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('svc-prewedding.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">💑</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Pre Wedding Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=baraat" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-baraat.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🐴</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Baraat &amp; Reception</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=mehndi" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('gallery-mehndi.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🌸</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Mehndi &amp; Haldi</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=candid" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-wedding2.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">📷</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Candid Wedding Photography</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=videographers" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('gallery-drone2.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🎬</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Wedding Videographers</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=sangeet" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">💃</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Sangeet Ceremony</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=engagement" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('svc-prewedding.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">💍</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Engagement Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=couple" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-wedding.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">❤️</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Couple Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Events & Special Occasions -->
+  <div class="svc-category-label">Events &amp; Special Occasions</div>
+  <div class="svc-tile-grid">
+
+    <a href="gallery.html?service=events" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('svc-event.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🎉</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Event Photographers</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=birthday" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🎂</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Birthday Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=housewarming" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🏠</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">House Warming Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=naming" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">👶</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Naming Ceremony Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=upanayanam" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🙏</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Upanayanam Photography</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=family" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">👨‍👩‍👧‍👦</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Family Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=corporate" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🏢</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Corporate Photographers</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Portrait & Specialty -->
+  <div class="svc-category-label">Portrait &amp; Specialty Photography</div>
+  <div class="svc-tile-grid">
+
+    <a href="gallery.html?service=maternity" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🤰</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Maternity Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=newborn" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">👶</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Newborn Photoshoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=baby" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🍼</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Baby Shower Photography</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=portfolio" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">👤</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Portfolio Shoot</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=drone" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('gallery-drone.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🚁</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Drone Photography</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=product" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">📦</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Product E-Commerce Photography</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=album" target="_blank" class="svc-tile gold">
+      <div class="svc-tile-bg" style="background-image:url('gallery-wedding2.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">📚</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Album Designers &amp; Printers</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+    <a href="gallery.html?service=studio" target="_blank" class="svc-tile blue">
+      <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+      <div class="svc-tile-overlay"></div>
+      <div class="svc-tile-icon">🏢</div>
+      <div class="svc-tile-body">
+        <div class="svc-tile-name">Photo Studio Near Me</div>
+        <div class="svc-tile-cta">View Photos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="svc-page-footer">
+  <p>© 2026 MVR Studio · Hyderabad, Telangana · +91 96523 41566</p>
+  <div class="svc-footer-links">
+    <a href="index.html">Home</a>
+    <a href="index.html#gallery">Gallery</a>
+    <a href="index.html#contact">Book a Session</a>
+    <a href="https://wa.me/919652341566" target="_blank">WhatsApp Us</a>
+  </div>
+</div>
+
+<!-- Floating WhatsApp -->
+<a href="https://wa.me/919652341566?text=Hello%20MVR%20Studio!" class="float-wa" target="_blank" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+</a>
+
+</body>
+</html>

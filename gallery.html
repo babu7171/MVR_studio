@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Photo Gallery | MVR Studio</title>
+  <meta name="description" content="View MVR Studio's professional photography portfolio — stunning photos from weddings, events, portraits, drone shots and more."/>
+  <link rel="icon" href="logo.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy:  #080c18;
+      --navyd:#0d1225;
+      --gold:  #c9a55a;
+      --goldd: #b8913e;
+      --white: #f5f0e8;
+      --g2: rgba(245,240,232,.85);
+      --g3: rgba(245,240,232,.55);
+      --g4: rgba(245,240,232,.35);
+      --r1: 8px;
+      --r2: 14px;
+      --r3: 20px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    .gal-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,12,24,.92);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(201,165,90,.15);
+      padding: 0 28px;
+    }
+    .gal-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+    }
+    .gal-nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .gal-nav-logo img { width: 38px; height: 38px; object-fit: contain; }
+    .gal-nav-logo em { color: var(--gold); font-style: italic; font-weight: 400; }
+    .gal-nav-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-back-svc {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 20px;
+      border: 1px solid rgba(201,165,90,.3);
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--gold);
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-back-svc:hover { background: rgba(201,165,90,.08); border-color: var(--gold); }
+    .btn-book {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 22px;
+      background: linear-gradient(135deg, var(--gold), var(--goldd));
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--navy);
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-book:hover { box-shadow: 0 4px 20px rgba(201,165,90,.35); transform: translateY(-1px); }
+
+    /* HERO */
+    .gal-hero {
+      background: linear-gradient(135deg, #0d1225 0%, #12182e 50%, #0d1225 100%);
+      padding: 60px 28px 50px;
+      text-align: center;
+      border-bottom: 1px solid rgba(201,165,90,.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .gal-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(201,165,90,.08) 0%, transparent 70%);
+    }
+    .gal-hero-icon {
+      font-size: 2.8rem;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .gal-hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 700;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .gal-hero h1 em { color: var(--gold); font-style: italic; }
+    .gal-hero p {
+      font-size: 0.92rem;
+      color: var(--g3);
+      max-width: 520px;
+      margin: 0 auto 20px;
+      line-height: 1.65;
+      position: relative;
+    }
+    .gal-hero-chips {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: relative;
+    }
+    .gal-chip {
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 50px;
+      border: 1px solid rgba(201,165,90,.25);
+      color: var(--g3);
+    }
+    .gal-chip.gold { border-color: var(--gold); color: var(--gold); background: rgba(201,165,90,.07); }
+
+    /* GALLERY GRID */
+    .gal-body {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 50px 28px 80px;
+    }
+    .gal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .gal-card {
+      border-radius: var(--r2);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      background: var(--navyd);
+    }
+    .gal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.5);
+    }
+    .gal-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s;
+    }
+    .gal-card:hover img { transform: scale(1.05); }
+    .gal-card-hover {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .gal-card:hover .gal-card-hover { opacity: 1; }
+    .gal-zoom-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(201,165,90,.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: var(--navy);
+      font-weight: 900;
+      transform: scale(0.7);
+      transition: transform 0.25s;
+    }
+    .gal-card:hover .gal-zoom-icon { transform: scale(1); }
+    .gal-card-label {
+      padding: 12px 16px;
+      font-size: 0.8rem;
+      color: var(--g3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-top: 1px solid rgba(255,255,255,.04);
+    }
+
+    /* LOADING */
+    .gal-loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--g3);
+      font-size: 1rem;
+    }
+    .gal-loading-icon {
+      font-size: 2.5rem;
+      animation: spin 2s linear infinite;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* LIGHTBOX */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,.95);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-inner {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .lightbox-inner img {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: var(--r2);
+      object-fit: contain;
+      box-shadow: 0 20px 60px rgba(0,0,0,.7);
+    }
+    .lightbox-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .lightbox-close:hover { background: rgba(255,82,82,.3); }
+    .lightbox-caption {
+      font-size: 0.85rem;
+      color: var(--g3);
+      text-align: center;
+    }
+    .lightbox-nav {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 46px;
+      height: 46px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #fff;
+      font-size: 1.3rem;
+    }
+    .lightbox-nav:hover { background: rgba(201,165,90,.3); border-color: var(--gold); }
+    .lightbox-prev { left: 14px; }
+    .lightbox-next { right: 14px; }
+
+    /* CTA BOTTOM */
+    .gal-cta {
+      background: linear-gradient(135deg, rgba(201,165,90,.08) 0%, rgba(201,165,90,.02) 100%);
+      border: 1px solid rgba(201,165,90,.15);
+      border-radius: var(--r3);
+      padding: 40px 30px;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .gal-cta h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    .gal-cta h3 em { color: var(--gold); font-style: italic; }
+    .gal-cta p { font-size: 0.9rem; color: var(--g3); margin-bottom: 22px; }
+    .gal-cta-btns { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .btn-wa {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 26px;
+      background: #25d366;
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-wa:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,211,102,.3); }
+    .btn-gold-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 26px;
+      background: linear-gradient(135deg, var(--gold), var(--goldd));
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--navy);
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-gold-link:hover { box-shadow: 0 6px 20px rgba(201,165,90,.35); transform: translateY(-2px); }
+
+    /* Footer strip */
+    .gal-footer {
+      background: var(--navyd);
+      border-top: 1px solid rgba(201,165,90,.08);
+      padding: 24px 28px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--g4);
+    }
+
+    /* Floating WA */
+    .float-wa {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 500;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #25d366;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 24px rgba(37,211,102,.4);
+      transition: transform 0.25s;
+      text-decoration: none;
+    }
+    .float-wa:hover { transform: scale(1.1); }
+
+    @media (max-width: 600px) {
+      .gal-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .gal-body { padding: 30px 14px 60px; }
+      .gal-card img { height: 160px; }
+      .lightbox-nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="gal-nav">
+  <div class="gal-nav-inner">
+    <a href="index.html" class="gal-nav-logo">
+      <img src="logo.png" alt="MVR Studio"/>
+      <span>MVR <em>Studio</em></span>
+    </a>
+    <div class="gal-nav-actions">
+      <a href="services.html" class="btn-back-svc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        All Services
+      </a>
+      <a href="index.html#contact" class="btn-book">📅 Book Now</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="gal-hero" id="galHero">
+  <div class="gal-hero-icon" id="serviceIcon">📸</div>
+  <h1 id="serviceTitle">MVR Studio <em>Portfolio</em></h1>
+  <p id="serviceDesc">A collection of our finest professional photography work.</p>
+  <div class="gal-hero-chips">
+    <span class="gal-chip gold" id="serviceChip">✦ Professional Photography</span>
+    <span class="gal-chip">Hyderabad, Telangana</span>
+    <span class="gal-chip">📞 +91 96523 41566</span>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<div class="gal-body">
+  <div class="gal-grid" id="galGrid">
+    <div class="gal-loading">
+      <div class="gal-loading-icon">📷</div>
+      <p>Loading beautiful photos…</p>
+    </div>
+  </div>
+
+  <!-- BOOK CTA -->
+  <div class="gal-cta" id="galCta" style="display:none;">
+    <h3>Love What You See? <em>Book Us!</em></h3>
+    <p>Contact MVR Studio today to reserve your date and discuss your photography package.</p>
+    <div class="gal-cta-btns">
+      <a href="https://wa.me/919652341566?text=Hello%20MVR%20Studio!%20I%20saw%20your%20portfolio%20and%20would%20like%20to%20book%20a%20session." target="_blank" class="btn-wa">
+        💬 WhatsApp Us
+      </a>
+      <a href="index.html#contact" class="btn-gold-link">
+        📅 Book a Session →
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <img id="lbImg" src="" alt=""/>
+    <div class="lightbox-caption" id="lbCap"></div>
+  </div>
+  <button class="lightbox-close" id="lbClose" title="Close">✕</button>
+  <button class="lightbox-nav lightbox-prev" id="lbPrev">‹</button>
+  <button class="lightbox-nav lightbox-next" id="lbNext">›</button>
+</div>
+
+<!-- FOOTER -->
+<div class="gal-footer">
+  © 2026 MVR Studio · Professional Photography &amp; Videography · Hyderabad
+</div>
+
+<!-- Floating WA -->
+<a href="https://wa.me/919652341566" class="float-wa" target="_blank" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+</a>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── SERVICE DATA ────────────────────────────────── */
+  const SERVICES = {
+    wedding: {
+      title: 'Wedding Photography',
+      icon: '💍',
+      desc: 'Stunning wedding photography covering every sacred ritual — from the Saat Phere at the mandap to the emotional Vidaai.',
+      chip: '💍 Indian Wedding Photography',
+      photos: [
+        { src: 'gallery-wedding.png',  cap: 'Bridal Portrait — MVR Studio' },
+        { src: 'gallery-wedding2.png', cap: 'Wedding Ceremony — Mandap' },
+        { src: 'gallery-baraat.png',   cap: 'Baraat Procession' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Wedding Shot' },
+        { src: 'gallery-mehndi.png',   cap: 'Mehndi Ceremony' },
+        { src: 'gallery-event.png',    cap: 'Sangeet Night' },
+        { src: 'svc-wedding.png',      cap: 'Couple Portrait' },
+        { src: 'gallery-drone2.png',   cap: 'Cinematic Film Still' }
+      ]
+    },
+    prewedding: {
+      title: 'Pre-Wedding Photoshoot',
+      icon: '💑',
+      desc: 'Romantic pre-wedding shoots at heritage palaces, scenic locations, and beautiful gardens across India.',
+      chip: '💑 Pre-Wedding Photography',
+      photos: [
+        { src: 'svc-prewedding.png',   cap: 'Pre-Wedding Shoot — Heritage Location' },
+        { src: 'gallery-wedding2.png', cap: 'Romantic Couple Portrait' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Pre-Wedding Shot' },
+        { src: 'gallery-mehndi.png',   cap: 'Bridal Preparation' },
+        { src: 'svc-wedding.png',      cap: 'Couple Photography' },
+        { src: 'gallery-drone2.png',   cap: 'Cinematic Pre-Wedding Film' }
+      ]
+    },
+    baraat: {
+      title: 'Baraat & Reception',
+      icon: '🐴',
+      desc: 'Grand Baraat procession coverage with dhol & band baja to the elegant Reception — every moment captured.',
+      chip: '🐴 Baraat Photography',
+      photos: [
+        { src: 'gallery-baraat.png',   cap: 'Baraat Grand Procession' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Baraat Drone Shot' },
+        { src: 'gallery-wedding.png',  cap: 'Reception Ceremony' },
+        { src: 'gallery-wedding2.png', cap: 'Groom Portrait' },
+        { src: 'gallery-event.png',    cap: 'Celebration Moments' },
+        { src: 'gallery-drone2.png',   cap: 'Cinematic Coverage' }
+      ]
+    },
+    mehndi: {
+      title: 'Mehndi & Haldi Ceremony',
+      icon: '🌸',
+      desc: 'Colourful Mehndi and playful Haldi ceremony photography capturing every tradition beautifully.',
+      chip: '🌸 Mehndi & Haldi',
+      photos: [
+        { src: 'gallery-mehndi.png',   cap: 'Mehndi Ceremony — Close-up' },
+        { src: 'gallery-event.png',    cap: 'Haldi Ceremony Fun' },
+        { src: 'gallery-baraat.png',   cap: 'Sangeet Dance' },
+        { src: 'gallery-wedding.png',  cap: 'Bride Portraits' },
+        { src: 'gallery-wedding2.png', cap: 'Family Celebrations' },
+        { src: 'svc-event.png',        cap: 'Candid Moments' }
+      ]
+    },
+    candid: {
+      title: 'Candid Wedding Photography',
+      icon: '📷',
+      desc: 'Natural, unposed candid photography capturing genuine emotions and laughter throughout your wedding day.',
+      chip: '📷 Candid Photography',
+      photos: [
+        { src: 'gallery-wedding2.png', cap: 'Candid Bridal Moment' },
+        { src: 'gallery-wedding.png',  cap: 'Genuine Emotions' },
+        { src: 'gallery-event.png',    cap: 'Family Candid' },
+        { src: 'gallery-baraat.png',   cap: 'Celebration Candid' },
+        { src: 'gallery-mehndi.png',   cap: 'Mehndi Candid' },
+        { src: 'svc-wedding.png',      cap: 'Natural Moments' },
+        { src: 'gallery-drone2.png',   cap: 'Cinematic Capture' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Candid' }
+      ]
+    },
+    videographers: {
+      title: 'Wedding Videographers',
+      icon: '🎬',
+      desc: 'Bollywood-style cinematic 4K wedding films with background music that you\'ll treasure for life.',
+      chip: '🎬 Wedding Videography',
+      photos: [
+        { src: 'gallery-drone2.png',   cap: '4K Cinematic Wedding Film' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Drone Footage' },
+        { src: 'gallery-wedding.png',  cap: 'Wedding Film Still' },
+        { src: 'gallery-baraat.png',   cap: 'Baraat Film Coverage' },
+        { src: 'gallery-event.png',    cap: 'Sangeet Film' },
+        { src: 'gallery-wedding2.png', cap: 'Couple Highlight' }
+      ]
+    },
+    sangeet: {
+      title: 'Sangeet Ceremony',
+      icon: '💃',
+      desc: 'Vibrant Sangeet night photography capturing dances, music, and celebrations in full colour.',
+      chip: '💃 Sangeet Photography',
+      photos: [
+        { src: 'gallery-event.png',    cap: 'Sangeet Night — Stage Performance' },
+        { src: 'svc-event.png',        cap: 'Dance Celebration' },
+        { src: 'gallery-baraat.png',   cap: 'Family Dance' },
+        { src: 'gallery-mehndi.png',   cap: 'Mehndi Night' },
+        { src: 'gallery-wedding2.png', cap: 'Couple Dance' },
+        { src: 'gallery-drone2.png',   cap: 'Aerial Stage Shot' }
+      ]
+    },
+    engagement: {
+      title: 'Engagement Photoshoot',
+      icon: '💍',
+      desc: 'Beautiful engagement ceremony photography capturing the joy of your special commitment day.',
+      chip: '💍 Engagement Photography',
+      photos: [
+        { src: 'svc-prewedding.png',   cap: 'Engagement Ring Close-up' },
+        { src: 'gallery-wedding.png',  cap: 'Engagement Ceremony' },
+        { src: 'gallery-wedding2.png', cap: 'Couple Portrait' },
+        { src: 'gallery-mehndi.png',   cap: 'Celebration Moments' },
+        { src: 'gallery-event.png',    cap: 'Family Gathering' },
+        { src: 'svc-wedding.png',      cap: 'Romantic Shot' }
+      ]
+    },
+    couple: {
+      title: 'Couple Photoshoot',
+      icon: '❤️',
+      desc: 'Romantic couple photography sessions at beautiful locations capturing love in every frame.',
+      chip: '❤️ Couple Photography',
+      photos: [
+        { src: 'svc-wedding.png',      cap: 'Couple Portrait' },
+        { src: 'svc-prewedding.png',   cap: 'Romantic Session' },
+        { src: 'gallery-wedding2.png', cap: 'Candid Love' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Couple Shot' },
+        { src: 'gallery-wedding.png',  cap: 'Traditional Couple' },
+        { src: 'gallery-drone2.png',   cap: 'Cinematic Couple' }
+      ]
+    },
+    events: {
+      title: 'Event Photographers',
+      icon: '🎉',
+      desc: 'Professional event photography for corporate events, grand parties, cultural programs and celebrations.',
+      chip: '🎉 Event Photography',
+      photos: [
+        { src: 'svc-event.png',        cap: 'Corporate Event' },
+        { src: 'gallery-event.png',    cap: 'Cultural Program' },
+        { src: 'gallery-baraat.png',   cap: 'Grand Celebration' },
+        { src: 'gallery-drone2.png',   cap: 'Aerial Event Shot' },
+        { src: 'gallery-wedding2.png', cap: 'Award Ceremony' },
+        { src: 'gallery-mehndi.png',   cap: 'Traditional Event' }
+      ]
+    },
+    birthday: {
+      title: 'Birthday Photoshoot',
+      icon: '🎂',
+      desc: 'Fun and vibrant birthday photography capturing cake-cutting, celebrations and precious memories.',
+      chip: '🎂 Birthday Photography',
+      photos: [
+        { src: 'gallery-event.png',    cap: 'Birthday Celebration' },
+        { src: 'svc-event.png',        cap: 'Cake Cutting Moment' },
+        { src: 'gallery-baraat.png',   cap: 'Birthday Dance' },
+        { src: 'gallery-wedding2.png', cap: 'Candid Birthday Shot' },
+        { src: 'gallery-mehndi.png',   cap: 'Decoration Details' },
+        { src: 'gallery-drone2.png',   cap: 'Overhead Celebration' }
+      ]
+    },
+    housewarming: {
+      title: 'House Warming Photoshoot',
+      icon: '🏠',
+      desc: 'Capturing the joy of your new home — pooja rituals, family moments, and the first steps into your new life.',
+      chip: '🏠 House Warming Photography',
+      photos: [
+        { src: 'gallery-event.png',    cap: 'Griha Pravesh Pooja' },
+        { src: 'gallery-mehndi.png',   cap: 'Family Blessings' },
+        { src: 'gallery-wedding.png',  cap: 'New Home Portrait' },
+        { src: 'gallery-baraat.png',   cap: 'Celebration Moments' },
+        { src: 'svc-portrait.png',     cap: 'Family Portrait' },
+        { src: 'gallery-wedding2.png', cap: 'Candid Happiness' }
+      ]
+    },
+    naming: {
+      title: 'Naming Ceremony Photoshoot',
+      icon: '👶',
+      desc: 'Beautiful Namkaran ceremony photography capturing the blessings and first name-giving ritual of your newborn.',
+      chip: '👶 Naming Ceremony Photography',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Naming Ceremony Ritual' },
+        { src: 'gallery-event.png',    cap: 'Family Blessings' },
+        { src: 'gallery-mehndi.png',   cap: 'Pooja Moments' },
+        { src: 'gallery-wedding.png',  cap: 'Traditional Ceremony' },
+        { src: 'gallery-baraat.png',   cap: 'Celebration Candid' },
+        { src: 'gallery-wedding2.png', cap: 'Grandparent Moments' }
+      ]
+    },
+    upanayanam: {
+      title: 'Upanayanam Photography',
+      icon: '🙏',
+      desc: 'Sacred Upanayanam (thread ceremony) photography capturing every religious ritual and family moment.',
+      chip: '🙏 Upanayanam Photography',
+      photos: [
+        { src: 'gallery-event.png',    cap: 'Upanayanam Ritual' },
+        { src: 'gallery-mehndi.png',   cap: 'Sacred Thread Ceremony' },
+        { src: 'svc-portrait.png',     cap: 'Boy Portrait' },
+        { src: 'gallery-wedding.png',  cap: 'Family Portrait' },
+        { src: 'gallery-baraat.png',   cap: 'Celebration Moments' },
+        { src: 'gallery-wedding2.png', cap: 'Candid Blessings' }
+      ]
+    },
+    family: {
+      title: 'Family Photoshoot',
+      icon: '👨‍👩‍👧‍👦',
+      desc: 'Warm family portraits and candid moments that capture the bond and love within your family.',
+      chip: '👨‍👩‍👧‍👦 Family Photography',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Family Portrait' },
+        { src: 'gallery-event.png',    cap: 'Family Celebration' },
+        { src: 'gallery-wedding2.png', cap: 'Candid Family' },
+        { src: 'gallery-mehndi.png',   cap: 'Traditional Family' },
+        { src: 'gallery-baraat.png',   cap: 'Festival Family Shot' },
+        { src: 'gallery-wedding.png',  cap: 'Formal Family Portrait' }
+      ]
+    },
+    corporate: {
+      title: 'Corporate Photographers',
+      icon: '🏢',
+      desc: 'Professional corporate photography for headshots, office events, product launches and brand imagery.',
+      chip: '🏢 Corporate Photography',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Corporate Headshot' },
+        { src: 'svc-event.png',        cap: 'Office Event Coverage' },
+        { src: 'gallery-event.png',    cap: 'Conference Photography' },
+        { src: 'gallery-drone2.png',   cap: 'Aerial Corporate' },
+        { src: 'gallery-drone.png',    cap: 'Office Aerial Shot' },
+        { src: 'gallery-wedding2.png', cap: 'Brand Photography' }
+      ]
+    },
+    maternity: {
+      title: 'Maternity Photoshoot',
+      icon: '🤰',
+      desc: 'Beautiful maternity photography celebrating the joy and glow of motherhood in stunning poses.',
+      chip: '🤰 Maternity Photography',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Maternity Portrait' },
+        { src: 'gallery-wedding.png',  cap: 'Couple Maternity Shot' },
+        { src: 'gallery-wedding2.png', cap: 'Outdoor Maternity' },
+        { src: 'svc-prewedding.png',   cap: 'Garden Maternity' },
+        { src: 'gallery-mehndi.png',   cap: 'Traditional Maternity' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Outdoor Shoot' }
+      ]
+    },
+    newborn: {
+      title: 'Newborn Photoshoot',
+      icon: '👶',
+      desc: 'Adorable newborn photography capturing tiny toes, peaceful sleeps and precious first days.',
+      chip: '👶 Newborn Photography',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Newborn Portrait' },
+        { src: 'gallery-wedding2.png', cap: 'Family with Newborn' },
+        { src: 'gallery-mehndi.png',   cap: 'Newborn Details' },
+        { src: 'gallery-event.png',    cap: 'Sleeping Baby' },
+        { src: 'gallery-wedding.png',  cap: 'Parents with Baby' },
+        { src: 'gallery-baraat.png',   cap: 'Newborn Family Portrait' }
+      ]
+    },
+    baby: {
+      title: 'Baby Shower Photography',
+      icon: '🍼',
+      desc: 'Colourful baby shower photography capturing the celebrations, games, gifts and precious moments.',
+      chip: '🍼 Baby Shower Photography',
+      photos: [
+        { src: 'gallery-event.png',    cap: 'Baby Shower Celebration' },
+        { src: 'svc-event.png',        cap: 'Baby Shower Decor' },
+        { src: 'svc-portrait.png',     cap: 'Mom-to-be Portrait' },
+        { src: 'gallery-wedding.png',  cap: 'Family Gathering' },
+        { src: 'gallery-baraat.png',   cap: 'Gift Ceremony' },
+        { src: 'gallery-mehndi.png',   cap: 'Celebration Candid' }
+      ]
+    },
+    portfolio: {
+      title: 'Portfolio Shoot',
+      icon: '👤',
+      desc: 'Professional portfolio photography for models, actors, and professionals to build their career portfolio.',
+      chip: '👤 Portfolio Photography',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Model Portfolio' },
+        { src: 'gallery-wedding.png',  cap: 'Fashion Portfolio' },
+        { src: 'gallery-wedding2.png', cap: 'Studio Portrait' },
+        { src: 'svc-prewedding.png',   cap: 'Outdoor Portfolio' },
+        { src: 'gallery-drone.png',    cap: 'Aerial Creative Shot' },
+        { src: 'gallery-event.png',    cap: 'Lifestyle Portfolio' }
+      ]
+    },
+    drone: {
+      title: 'Drone Photography',
+      icon: '🚁',
+      desc: 'Stunning DGCA-licensed aerial drone photography capturing breathtaking views from the sky.',
+      chip: '🚁 Aerial Drone Photography',
+      photos: [
+        { src: 'gallery-drone.png',    cap: 'Aerial Drone Shot' },
+        { src: 'gallery-drone2.png',   cap: 'Cinematic Drone Footage' },
+        { src: 'gallery-baraat.png',   cap: 'Baraat Aerial View' },
+        { src: 'gallery-wedding.png',  cap: 'Wedding Venue Aerial' },
+        { src: 'gallery-event.png',    cap: 'Event Aerial Shot' },
+        { src: 'gallery-wedding2.png', cap: 'Landscape Drone' }
+      ]
+    },
+    product: {
+      title: 'Product E-Commerce Photography',
+      icon: '📦',
+      desc: 'Clean and professional product photography for e-commerce platforms — Amazon, Flipkart, Instagram shops.',
+      chip: '📦 Product Photography',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Product Studio Shot' },
+        { src: 'gallery-event.png',    cap: 'Product Lifestyle' },
+        { src: 'gallery-wedding2.png', cap: 'Fashion Product' },
+        { src: 'gallery-mehndi.png',   cap: 'Jewellery Product' },
+        { src: 'svc-prewedding.png',   cap: 'Outdoor Product' },
+        { src: 'gallery-drone2.png',   cap: 'Creative Product' }
+      ]
+    },
+    album: {
+      title: 'Album Designers & Printers',
+      icon: '📚',
+      desc: 'Premium custom wedding albums, photo books and print services — beautifully designed and printed.',
+      chip: '📚 Album Design & Print',
+      photos: [
+        { src: 'gallery-wedding2.png', cap: 'Premium Wedding Album' },
+        { src: 'gallery-wedding.png',  cap: 'Photo Book Design' },
+        { src: 'gallery-mehndi.png',   cap: 'Traditional Album' },
+        { src: 'gallery-event.png',    cap: 'Event Photo Book' },
+        { src: 'gallery-baraat.png',   cap: 'Family Album' },
+        { src: 'gallery-drone2.png',   cap: 'Cinematic Album' }
+      ]
+    },
+    studio: {
+      title: 'Photo Studio Near Me',
+      icon: '🏢',
+      desc: 'MVR Studio — your professional photography studio in Hyderabad for all your photography needs.',
+      chip: '🏢 Photography Studio Hyderabad',
+      photos: [
+        { src: 'svc-portrait.png',     cap: 'Studio Portrait' },
+        { src: 'gallery-wedding.png',  cap: 'Studio Wedding Shot' },
+        { src: 'gallery-event.png',    cap: 'Studio Event Shoot' },
+        { src: 'gallery-wedding2.png', cap: 'Studio Couple Shot' },
+        { src: 'svc-prewedding.png',   cap: 'Studio Pre-Wedding' },
+        { src: 'gallery-baraat.png',   cap: 'Studio Celebration' }
+      ]
+    }
+  };
+
+  /* ── INIT ────────────────────────────────── */
+  const params   = new URLSearchParams(window.location.search);
+  const service  = params.get('service') || 'wedding';
+  const data     = SERVICES[service] || SERVICES.wedding;
+
+  // Update title
+  document.title = data.title + ' | MVR Studio';
+  document.getElementById('serviceIcon').textContent = data.icon;
+  document.getElementById('serviceTitle').innerHTML  = data.title.replace(/ ([^ ]+)$/, ' <em>$1</em>');
+  document.getElementById('serviceDesc').textContent = data.desc;
+  document.getElementById('serviceChip').textContent = data.chip;
+
+  /* ── RENDER GRID ────────────────────────────── */
+  let currentIdx = 0;
+  const photos = data.photos;
+
+  function renderGallery() {
+    const grid = document.getElementById('galGrid');
+    grid.innerHTML = '';
+
+    photos.forEach((ph, idx) => {
+      const card = document.createElement('div');
+      card.className = 'gal-card';
+      card.innerHTML = `
+        <img src="${ph.src}" alt="${ph.cap}" loading="lazy"/>
+        <div class="gal-card-hover"><div class="gal-zoom-icon">⊕</div></div>
+        <div class="gal-card-label">📷 ${ph.cap}</div>
+      `;
+      card.addEventListener('click', () => openLightbox(idx));
+      grid.appendChild(card);
+    });
+
+    document.getElementById('galCta').style.display = 'block';
+  }
+
+  // slight delay to let page paint first
+  setTimeout(renderGallery, 200);
+
+  /* ── LIGHTBOX ────────────────────────────── */
+  const lb      = document.getElementById('lightbox');
+  const lbImg   = document.getElementById('lbImg');
+  const lbCap   = document.getElementById('lbCap');
+  const lbClose = document.getElementById('lbClose');
+  const lbPrev  = document.getElementById('lbPrev');
+  const lbNext  = document.getElementById('lbNext');
+
+  function openLightbox(idx) {
+    currentIdx = idx;
+    showLbImage();
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function showLbImage() {
+    const ph = photos[currentIdx];
+    lbImg.src = ph.src;
+    lbImg.alt = ph.cap;
+    lbCap.textContent = ph.cap;
+  }
+
+  function closeLb() {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  lbClose.addEventListener('click', closeLb);
+  lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+  lbPrev.addEventListener('click', () => { currentIdx = (currentIdx - 1 + photos.length) % photos.length; showLbImage(); });
+  lbNext.addEventListener('click', () => { currentIdx = (currentIdx + 1) % photos.length; showLbImage(); });
+
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape')     closeLb();
+    if (e.key === 'ArrowLeft')  { currentIdx = (currentIdx - 1 + photos.length) % photos.length; showLbImage(); }
+    if (e.key === 'ArrowRight') { currentIdx = (currentIdx + 1) % photos.length; showLbImage(); }
+  });
+
+})();
+</script>
+
+</body>
+</html>
