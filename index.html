@@ -1285,8 +1285,51 @@
     document.getElementById('gmDesc').textContent  = data.desc;
     const grid = document.getElementById('gmGrid');
     grid.innerHTML = '';
-    lbPhotos = data.photos;
-    data.photos.forEach(function(ph, i) {
+
+    // Combine static photos with dynamically loaded photos for this category
+    let combinedPhotos = [];
+
+    // A. Prepend any local storage mock uploaded photos for this category
+    try {
+      const localItems = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
+      localItems.forEach(function(item) {
+        if (item.category === key && item.src) {
+          combinedPhotos.push({ src: item.src, cap: item.cap || 'MVR Work' });
+        }
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+
+    // B. Prepend any GitHub database live synced uploaded photos for this category
+    if (window.customGalleryDb && Array.isArray(window.customGalleryDb)) {
+      window.customGalleryDb.forEach(function(item) {
+        if (item.category === key && item.src) {
+          const alreadyAdded = combinedPhotos.some(function(existing) {
+            return existing.src === item.src;
+          });
+          if (!alreadyAdded) {
+            combinedPhotos.push({ src: item.src, cap: item.cap || 'MVR Work' });
+          }
+        }
+      });
+    }
+
+    // C. Append default static photos
+    if (data.photos && Array.isArray(data.photos)) {
+      data.photos.forEach(function(ph) {
+        const alreadyAdded = combinedPhotos.some(function(existing) {
+          return existing.src === ph.src;
+        });
+        if (!alreadyAdded) {
+          combinedPhotos.push(ph);
+        }
+      });
+    }
+
+    lbPhotos = combinedPhotos;
+
+    combinedPhotos.forEach(function(ph, i) {
       const card = document.createElement('div');
       card.className = 'gm-card';
       card.innerHTML = '<img src="'+ph.src+'" alt="'+ph.cap+'" loading="lazy"/>'+

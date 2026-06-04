@@ -254,7 +254,7 @@
     });
   }
 
-  // ── Gallery Tab Logic (base64 local storage) ──
+  // ── Gallery Tab Logic (base64 local storage + GitHub integration) ──
   function initGalleryManager() {
     const fileInput = document.getElementById('adminFileInput');
     const dropZone = document.getElementById('adminDropZone');
@@ -263,7 +263,83 @@
     const upLabel = document.getElementById('adminUpLabel');
     const previewContainer = document.getElementById('adminGalPreview');
 
+    // GitHub Connection controls
+    const ghTokenInput = document.getElementById('ghToken');
+    const btnConnectGh = document.getElementById('btnConnectGh');
+    const btnDisconnectGh = document.getElementById('btnDisconnectGh');
+    const ghStatusBadge = document.getElementById('ghStatusBadge');
+
+    // Metadata inputs
+    const uploadCaptionInput = document.getElementById('uploadCaption');
+    const uploadCategorySelect = document.getElementById('uploadCategory');
+    const syncToGithubCheck = document.getElementById('syncToGithub');
+
     if (!previewContainer) return;
+
+    let ghToken = localStorage.getItem('mvr_github_token') || '';
+    const repoOwner = 'babu7171';
+    const repoName = 'MVR_studio';
+    let githubItems = [];
+
+    // Connection UI status updates
+    function updateGhUI() {
+      if (ghToken) {
+        if (ghStatusBadge) {
+          ghStatusBadge.textContent = 'Connected to babu7171/MVR_studio';
+          ghStatusBadge.style.background = 'rgba(201, 165, 90, 0.1)';
+          ghStatusBadge.style.borderColor = 'var(--gold)';
+          ghStatusBadge.style.color = 'var(--gold)';
+        }
+        if (ghTokenInput) {
+          ghTokenInput.value = '••••••••••••••••••••';
+          ghTokenInput.disabled = true;
+        }
+        if (btnConnectGh) btnConnectGh.style.display = 'none';
+        if (btnDisconnectGh) btnDisconnectGh.style.display = 'inline-block';
+      } else {
+        if (ghStatusBadge) {
+          ghStatusBadge.textContent = 'Disconnected';
+          ghStatusBadge.style.background = 'rgba(255,82,82,0.1)';
+          ghStatusBadge.style.borderColor = 'rgba(255,82,82,0.3)';
+          ghStatusBadge.style.color = '#ff5252';
+        }
+        if (ghTokenInput) {
+          ghTokenInput.value = '';
+          ghTokenInput.disabled = false;
+        }
+        if (btnConnectGh) btnConnectGh.style.display = 'inline-block';
+        if (btnDisconnectGh) btnDisconnectGh.style.display = 'none';
+      }
+    }
+
+    if (btnConnectGh) {
+      btnConnectGh.addEventListener('click', () => {
+        const val = ghTokenInput.value.trim();
+        if (!val || val.startsWith('•••')) {
+          alert('Please enter a valid GitHub Personal Access Token (PAT).');
+          return;
+        }
+        ghToken = val;
+        localStorage.setItem('mvr_github_token', val);
+        alert('GitHub Token saved successfully!');
+        updateGhUI();
+        fetchGithubGallery().then(renderGalleryPreview);
+      });
+    }
+
+    if (btnDisconnectGh) {
+      btnDisconnectGh.addEventListener('click', () => {
+        if (confirm('Disconnect GitHub account?')) {
+          ghToken = '';
+          githubItems = [];
+          localStorage.removeItem('mvr_github_token');
+          updateGhUI();
+          renderGalleryPreview();
+        }
+      });
+    }
+
+    updateGhUI();
 
     function getGallery() {
       try {
@@ -281,8 +357,31 @@
       }
     }
 
+    // Fetch public gallery database file from the GitHub repository
+    async function fetchGithubGallery() {
+      if (!ghToken) return;
+      try {
+        const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json?t=${Date.now()}`;
+        const dbGetResp = await fetch(dbUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `token ${ghToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (dbGetResp.ok) {
+          const dbGetData = await dbGetResp.json();
+          const decoded = atob(dbGetData.content.replace(/\s/g, ''));
+          const dbContentObj = JSON.parse(decoded);
+          githubItems = dbContentObj.gallery || [];
+        }
+      } catch (err) {
+        console.error('Error fetching gallery DB from GitHub:', err);
+      }
+    }
+
     function renderGalleryPreview() {
-      const items = getGallery();
+      const items = ghToken && syncToGithubCheck && syncToGithubCheck.checked ? githubItems : getGallery();
 
       if (items.length === 0) {
         previewContainer.innerHTML = `
@@ -298,26 +397,199 @@
           ? `<video src="${item.src}" muted playsinline preload="metadata"></video>`
           : `<img src="${item.src}" alt="${item.cap || ''}"/>`;
 
+        const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
+        const badgeText = isSync ? 'Live Sync' : 'Local';
+        const badgeColor = isSync ? 'var(--gold)' : '#ff5252';
+
         return `
           <div class="admin-gal-card">
             ${mediaHTML}
             <button onclick="window.deleteGalleryItem(${idx})" class="admin-gal-del" title="Remove Item">✕</button>
-            <div class="admin-gal-info">${item.cap || 'MVR Work'}</div>
+            <div class="admin-gal-info" style="display:flex; justify-content:space-between; align-items:center; gap:5px; bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85));">
+              <span style="overflow:hidden; text-overflow:ellipsis; max-width: 65%;">${item.cap || 'MVR Work'}</span>
+              <span style="font-size: 0.58rem; padding: 1px 4px; border-radius: 4px; border: 1px solid ${badgeColor}; color: ${badgeColor}; font-weight:700;">${badgeText}</span>
+            </div>
           </div>
         `;
       }).join('');
     }
 
-    // Global delete gallery handler
-    window.deleteGalleryItem = function(index) {
-      if (confirm("Are you sure you want to delete this gallery item from the website?")) {
+    // Direct upload of a single file to GitHub repository contents
+    async function uploadFileToGithub(file, caption, category) {
+      const isVid = file.type.startsWith('video/');
+      const fileType = isVid ? 'video' : 'photo';
+
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const parts = reader.result.split(',');
+          resolve(parts[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const timestamp = Math.floor(Date.now() / 1000);
+      const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filename = `${timestamp}-${cleanName}`;
+      const repoFilePath = `uploads/${filename}`;
+
+      if (upLabel) upLabel.textContent = `Uploading ${file.name} to GitHub...`;
+
+      const fileUploadUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${repoFilePath}`;
+      const fileUploadBody = {
+        message: `Upload ${fileType} via Admin: ${caption}`,
+        content: base64Data,
+        branch: 'main'
+      };
+
+      const fileResp = await fetch(fileUploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(fileUploadBody)
+      });
+
+      if (!fileResp.ok) {
+        const errJson = await fileResp.json().catch(() => ({}));
+        throw new Error(errJson.message || `File upload failed with status ${fileResp.status}`);
+      }
+
+      // Update gallery_db.json
+      if (upLabel) upLabel.textContent = `Updating database (gallery_db.json)...`;
+
+      const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
+      let dbSha = '';
+      let dbContentObj = { gallery: [] };
+
+      const dbGetResp = await fetch(dbUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (dbGetResp.ok) {
+        const dbGetData = await dbGetResp.json();
+        dbSha = dbGetData.sha;
         try {
-          const items = getGallery();
-          items.splice(index, 1);
-          saveGallery(items);
+          const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
+          dbContentObj = JSON.parse(decoded);
+          if (!dbContentObj.gallery) dbContentObj.gallery = [];
+        } catch (e) {
+          console.error('Failed to parse existing gallery_db.json, starting fresh', e);
+        }
+      }
+
+      dbContentObj.gallery.unshift({
+        src: repoFilePath,
+        type: fileType,
+        cap: caption,
+        category: category,
+        uploadedAt: new Date().toISOString().split('T')[0]
+      });
+
+      const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
+
+      const dbUpdateBody = {
+        message: `Update gallery_db.json for ${caption}`,
+        content: updatedDbBase64,
+        branch: 'main'
+      };
+      if (dbSha) {
+        dbUpdateBody.sha = dbSha;
+      }
+
+      const dbPutResp = await fetch(dbUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dbUpdateBody)
+      });
+
+      if (!dbPutResp.ok) {
+        const errJson = await dbPutResp.json().catch(() => ({}));
+        throw new Error(errJson.message || `Database update failed with status ${dbPutResp.status}`);
+      }
+    }
+
+    // Delete photo/video metadata entry from GitHub repository
+    async function deleteGalleryItemFromGithub(index) {
+      if (!ghToken) return;
+      const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
+      const dbGetResp = await fetch(dbUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (!dbGetResp.ok) return;
+      const dbGetData = await dbGetResp.json();
+      const dbSha = dbGetData.sha;
+      const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
+      const dbContentObj = JSON.parse(decoded);
+      if (!dbContentObj.gallery) dbContentObj.gallery = [];
+
+      dbContentObj.gallery.splice(index, 1);
+
+      const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
+      const dbUpdateBody = {
+        message: `Delete item index ${index} from gallery_db.json`,
+        content: updatedDbBase64,
+        branch: 'main',
+        sha: dbSha
+      };
+
+      const dbPutResp = await fetch(dbUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dbUpdateBody)
+      });
+
+      if (!dbPutResp.ok) {
+        const errJson = await dbPutResp.json().catch(() => ({}));
+        throw new Error(errJson.message || `Failed to update DB after deletion: ${errJson.message}`);
+      }
+    }
+
+    // Global delete gallery handler
+    window.deleteGalleryItem = async function(index) {
+      const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
+      const targetStr = isSync ? "GitHub repository (Live Site)" : "local browser storage";
+      if (confirm(`Are you sure you want to delete this gallery item from ${targetStr}?`)) {
+        try {
+          if (isSync) {
+            if (uploadProg) uploadProg.style.display = 'flex';
+            if (upFill) upFill.style.width = '50%';
+            if (upLabel) upLabel.textContent = 'Deleting from GitHub...';
+
+            await deleteGalleryItemFromGithub(index);
+            await fetchGithubGallery();
+
+            if (uploadProg) uploadProg.style.display = 'none';
+            if (upFill) upFill.style.width = '0%';
+          } else {
+            const items = getGallery();
+            items.splice(index, 1);
+            saveGallery(items);
+          }
           renderGalleryPreview();
         } catch (err) {
           console.error(err);
+          alert('Delete failed: ' + err.message);
+          if (uploadProg) uploadProg.style.display = 'none';
         }
       }
     };
@@ -354,10 +626,25 @@
       });
     }
 
+    if (syncToGithubCheck) {
+      syncToGithubCheck.addEventListener('change', () => {
+        if (syncToGithubCheck.checked && ghToken && githubItems.length === 0) {
+          if (uploadProg) uploadProg.style.display = 'flex';
+          if (upLabel) upLabel.textContent = 'Loading live items...';
+          fetchGithubGallery().then(() => {
+            if (uploadProg) uploadProg.style.display = 'none';
+            renderGalleryPreview();
+          });
+        } else {
+          renderGalleryPreview();
+        }
+      });
+    }
+
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif',
                            'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
 
-    function handleUploadFiles(files) {
+    async function handleUploadFiles(files) {
       if (!files || !files.length) return;
       const valid = Array.from(files).filter(f => ALLOWED_TYPES.includes(f.type) || f.type.startsWith('image/') || f.type.startsWith('video/'));
       if (!valid.length) {
@@ -367,36 +654,76 @@
 
       if (uploadProg) uploadProg.style.display = 'flex';
       let done = 0;
-      const items = getGallery();
 
-      valid.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const url = ev.target.result;
-          const isVid = file.type.startsWith('video/');
-          const cap = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-          items.push({ src: url, type: isVid ? 'video' : 'photo', cap, isNew: true });
-          done++;
-          
-          const pct = Math.round((done / valid.length) * 100);
-          if (upFill) upFill.style.width = pct + '%';
-          if (upLabel) upLabel.textContent = `Processing ${done} / ${valid.length}`;
+      const customCaption = uploadCaptionInput ? uploadCaptionInput.value.trim() : '';
+      const customCategory = uploadCategorySelect ? uploadCategorySelect.value : 'all';
+      const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
 
-          if (done === valid.length) {
-            saveGallery(items);
-            setTimeout(() => {
-              if (uploadProg) uploadProg.style.display = 'none';
-              if (upFill) upFill.style.width = '0%';
-            }, 800);
-            renderGalleryPreview();
+      if (isSync) {
+        for (const file of valid) {
+          try {
+            const caption = customCaption || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+            await uploadFileToGithub(file, caption, customCategory);
+            done++;
+            const pct = Math.round((done / valid.length) * 100);
+            if (upFill) upFill.style.width = pct + '%';
+            if (upLabel) upLabel.textContent = `Completed ${done} / ${valid.length}`;
+          } catch (err) {
+            console.error('GitHub Upload Error for file ' + file.name, err);
+            alert(`Failed to upload ${file.name} to GitHub: ${err.message}`);
           }
-        };
-        reader.readAsDataURL(file);
-      });
+        }
+
+        await fetchGithubGallery();
+
+        setTimeout(() => {
+          if (uploadProg) uploadProg.style.display = 'none';
+          if (upFill) upFill.style.width = '0%';
+        }, 1200);
+
+        renderGalleryPreview();
+        if (uploadCaptionInput) uploadCaptionInput.value = '';
+      } else {
+        const items = getGallery();
+        valid.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const url = ev.target.result;
+            const isVid = file.type.startsWith('video/');
+            const caption = customCaption || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+            items.unshift({ src: url, type: isVid ? 'video' : 'photo', cap: caption, category: customCategory, isNew: true });
+            done++;
+
+            const pct = Math.round((done / valid.length) * 100);
+            if (upFill) upFill.style.width = pct + '%';
+            if (upLabel) upLabel.textContent = `Processing ${done} / ${valid.length}`;
+
+            if (done === valid.length) {
+              saveGallery(items);
+              setTimeout(() => {
+                if (uploadProg) uploadProg.style.display = 'none';
+                if (upFill) upFill.style.width = '0%';
+              }, 800);
+              renderGalleryPreview();
+              if (uploadCaptionInput) uploadCaptionInput.value = '';
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      }
     }
 
-    // Render preview on start
-    renderGalleryPreview();
+    // Initial load
+    if (ghToken) {
+      if (uploadProg) uploadProg.style.display = 'flex';
+      if (upLabel) upLabel.textContent = 'Loading live items...';
+      fetchGithubGallery().then(() => {
+        if (uploadProg) uploadProg.style.display = 'none';
+        renderGalleryPreview();
+      });
+    } else {
+      renderGalleryPreview();
+    }
   }
 
 })();

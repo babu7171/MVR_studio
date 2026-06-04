@@ -460,17 +460,51 @@
   }
 
   // Load custom saved items from localStorage (uploaded locally by admin)
-  function loadCustomGallery() {
+  // Load custom saved items from localStorage (local test) + gallery_db.json (GitHub)
+  async function loadCustomGallery() {
+    // 1. Load local test uploads
     try {
       const items = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
       items.forEach(item => {
         if (item.src && item.src.startsWith('data:')) {
-          galleryItems.push({ ...item, isNew: true });
+          // Prepend local items
+          galleryItems.unshift({ ...item, isNew: true });
         }
       });
     } catch (err) {
       console.warn('Failed to load custom gallery from localStorage');
     }
+
+    // 2. Fetch live items from gallery_db.json
+    try {
+      const dbResp = await fetch('gallery_db.json?t=' + Date.now());
+      if (dbResp.ok) {
+        const data = await dbResp.json();
+        if (data && Array.isArray(data.gallery)) {
+          // Store in a global variable for index.html's openGallery to access
+          window.customGalleryDb = data.gallery;
+
+          data.gallery.forEach(item => {
+            // Check if already loaded to avoid duplicates
+            if (!galleryItems.some(existing => existing.src === item.src)) {
+              // Prepend live public items
+              galleryItems.unshift({
+                src: item.src,
+                type: item.type || 'photo',
+                cap: item.cap || 'MVR Work',
+                category: item.category || 'all',
+                isNew: true
+              });
+            }
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch public gallery_db.json, showing local items only');
+    }
+
+    // 3. Re-apply filter and rebuild lightbox after loading items
+    applyFilter(activeFilter);
   }
 
   /* ══════════════════════════════════════════════════
@@ -614,7 +648,6 @@
 
   // Init gallery
   loadCustomGallery();
-  applyFilter('all');
 
   /* ══════════════════════════════════════════════════
      CONTACT FORM — with EmailJS + localStorage storage
