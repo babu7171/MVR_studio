@@ -807,11 +807,27 @@
       const val = fService.value;
       if (val === 'Full Wedding Package') {
         fBudget.value = 'Above ₹1,00,000';
-      } else if (val === 'Indian Wedding Photography' || val === 'Cinematic Wedding Film') {
+      } else if (val === 'Indian Wedding Photography' || 
+                 val === 'Candid Wedding Photography' || 
+                 val === 'Wedding Videographers') {
         fBudget.value = '₹50,000 – ₹1,00,000';
-      } else if (val === 'Sangeet & Mehndi' || val === 'Baraat & Reception' || val === 'Pre-Wedding Shoot') {
+      } else if (val === 'Pre-Wedding Shoot' || 
+                 val === 'Baraat & Reception' || 
+                 val === 'Mehndi & Haldi Ceremony' || 
+                 val === 'Sangeet Ceremony' || 
+                 val === 'Engagement Photoshoot' || 
+                 val === 'Event Photographers' || 
+                 val === 'House Warming Photoshoot' || 
+                 val === 'Upanayanam Photography' || 
+                 val === 'Album Design & Print') {
         fBudget.value = '₹25,000 – ₹50,000';
-      } else if (val === 'Haldi Ceremony' || val === 'Drone Photography') {
+      } else if (val === 'Drone Aerial Photography' || 
+                 val === 'Birthday Photoshoot' || 
+                 val === 'Naming Ceremony' || 
+                 val === 'Family Photoshoot' || 
+                 val === 'Maternity Photoshoot' || 
+                 val === 'Newborn Photoshoot' || 
+                 val === 'Portfolio Shoot') {
         fBudget.value = '₹10,000 – ₹25,000';
       } else {
         fBudget.value = '';
