@@ -382,13 +382,13 @@
             <label for="syncToGithub" style="font-size: 0.82rem; color: var(--g3); cursor: pointer; user-select: none;">Sync with GitHub Repository (Commit directly to babu7171/MVR_studio)</label>
           </div>
         </div>
-        <div class="upload-drop" id="adminDropZone" style="padding: 40px; border: 2px dashed rgba(255,255,255,0.15); border-radius: var(--r3); text-align: center; cursor: pointer; transition: all 0.3s ease;">
+        <label class="upload-drop" id="adminDropZone" for="adminFileInput" style="display: block; padding: 40px; border: 2px dashed rgba(255,255,255,0.15); border-radius: var(--r3); text-align: center; cursor: pointer; transition: all 0.3s ease;">
           <div class="ud-icon" style="font-size: 2.5rem; margin-bottom: 10px;">📁</div>
           <h3 style="font-size: 1.2rem; color: var(--white); margin: 0 0 5px 0;">Drag &amp; Drop Photos or Videos</h3>
           <p style="font-size: 0.82rem; color: var(--g3); margin: 0 0 15px 0;">Or click anywhere to select files from your computer</p>
-          <button type="button" class="btn-gold" style="font-size: 0.8rem; padding: 8px 20px; border-radius:var(--r1); border:none; font-weight:700; cursor:pointer;">Choose Files</button>
-          <input type="file" id="adminFileInput" multiple accept="image/*,video/*" hidden/>
-        </div>
+          <span class="btn-gold" style="font-size: 0.8rem; padding: 8px 20px; border-radius:var(--r1); border:none; font-weight:700; cursor:pointer; display: inline-block;">Choose Files</span>
+          <input type="file" id="adminFileInput" multiple accept="image/*,video/*" style="display: none;"/>
+        </label>
         
         <div class="upload-prog" id="adminUploadProg" style="display:none; margin-top: 20px; flex-direction:column; gap:8px;">
           <div class="up-bar" style="width:100%; height:6px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden;">
