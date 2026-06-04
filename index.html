@@ -397,7 +397,7 @@
     </div>
 
     <div class="svc-cat-label">Wedding &amp; Ceremonies</div>
-    <div class="svc-tile-grid">
+    <div class="svc-tile-grid" id="gridWedding">
       <button class="svc-tile" onclick="openGallery('wedding')">
         <div class="svc-tile-bg" style="background-image:url('gallery-wedding.png')"></div>
         <div class="svc-tile-ov"></div>
@@ -482,7 +482,7 @@
     </div>
 
     <div class="svc-cat-label">Events &amp; Special Occasions</div>
-    <div class="svc-tile-grid">
+    <div class="svc-tile-grid" id="gridEvents">
       <button class="svc-tile" onclick="openGallery('events')">
         <div class="svc-tile-bg" style="background-image:url('svc-event.png')"></div>
         <div class="svc-tile-ov"></div>
@@ -540,7 +540,7 @@
     </div>
 
     <div class="svc-cat-label">Portrait &amp; Specialty Photography</div>
-    <div class="svc-tile-grid">
+    <div class="svc-tile-grid" id="gridPortraits">
       <button class="svc-tile" onclick="openGallery('maternity')">
         <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
         <div class="svc-tile-ov"></div>
@@ -881,25 +881,25 @@
               <label for="fService">Service Required *</label>
               <select id="fService" name="service" required>
                 <option value="">Select a service…</option>
-                <option value="Indian Wedding Photography">Indian Wedding Photography</option>
-                <option value="Pre-Wedding Shoot">Pre-Wedding Shoot</option>
-                <option value="Baraat &amp; Reception">Baraat &amp; Reception</option>
-                <option value="Mehndi &amp; Haldi Ceremony">Mehndi &amp; Haldi Ceremony</option>
-                <option value="Candid Wedding Photography">Candid Wedding Photography</option>
-                <option value="Wedding Videographers">Wedding Videographers</option>
-                <option value="Sangeet Ceremony">Sangeet Ceremony</option>
-                <option value="Engagement Photoshoot">Engagement Photoshoot</option>
-                <option value="Drone Aerial Photography">Drone Aerial Photography</option>
-                <option value="Event Photographers">Event Photographers</option>
-                <option value="Birthday Photoshoot">Birthday Photoshoot</option>
-                <option value="House Warming Photoshoot">House Warming Photoshoot</option>
-                <option value="Naming Ceremony">Naming Ceremony</option>
-                <option value="Upanayanam Photography">Upanayanam Photography</option>
-                <option value="Family Photoshoot">Family Photoshoot</option>
-                <option value="Maternity Photoshoot">Maternity Photoshoot</option>
-                <option value="Newborn Photoshoot">Newborn Photoshoot</option>
-                <option value="Portfolio Shoot">Portfolio Shoot</option>
-                <option value="Album Design &amp; Print">Album Design &amp; Print</option>
+                <option value="Wedding Photographers">💍 Wedding Photographers</option>
+                <option value="Pre Wedding Photoshoot">💑 Pre Wedding Photoshoot</option>
+                <option value="Baraat &amp; Reception">🐴 Baraat &amp; Reception</option>
+                <option value="Mehndi &amp; Haldi">🌸 Mehndi &amp; Haldi</option>
+                <option value="Candid Wedding Photography">📷 Candid Wedding Photography</option>
+                <option value="Wedding Videographers">🎬 Wedding Videographers</option>
+                <option value="Sangeet Ceremony">💃 Sangeet Ceremony</option>
+                <option value="Engagement Photoshoot">💎 Engagement Photoshoot</option>
+                <option value="Drone Aerial Photography">🚁 Drone Aerial Photography</option>
+                <option value="Event Photographers">🎉 Event Photographers</option>
+                <option value="Birthday Photoshoot">🎂 Birthday Photoshoot</option>
+                <option value="House Warming Photoshoot">🏠 House Warming Photoshoot</option>
+                <option value="Naming Ceremony">👶 Naming Ceremony</option>
+                <option value="Upanayanam Photography">🙏 Upanayanam Photography</option>
+                <option value="Family Photoshoot">👨‍👩‍👧‍👦 Family Photoshoot</option>
+                <option value="Maternity Photoshoot">🤰 Maternity Photoshoot</option>
+                <option value="Newborn Photoshoot">🍼 Newborn Photoshoot</option>
+                <option value="Portfolio Shoot">👤 Portfolio Shoot</option>
+                <option value="Album Design &amp; Print">📚 Album Design &amp; Print</option>
                 <option value="Full Wedding Package">Full Wedding Package (All Events)</option>
               </select>
             </div>
@@ -995,11 +995,11 @@
       <div class="ft-col">
         <h4>Services</h4>
         <ul>
-          <li><a href="#services">Indian Wedding Photography</a></li>
-          <li><a href="#services">Sangeet &amp; Mehndi</a></li>
+          <li><a href="#services">Wedding Photographers</a></li>
+          <li><a href="#services">Sangeet Ceremony</a></li>
           <li><a href="#services">Baraat &amp; Reception</a></li>
           <li><a href="#services">Drone Aerial Photography</a></li>
-          <li><a href="#services">Cinematic Wedding Films</a></li>
+          <li><a href="#services">Wedding Videographers</a></li>
         </ul>
       </div>
       <div class="ft-col">
@@ -1060,7 +1060,7 @@
       {src:'gallery-event.png', cap:'Celebration Moments'},
       {src:'gallery-drone2.png', cap:'Cinematic Coverage'}
     ]},
-    mehndi:       { icon:'🌸', title:'Mehndi & Haldi Ceremony', desc:'Colourful traditions captured beautifully', photos:[
+    mehndi:       { icon:'🌸', title:'Mehndi & Haldi', desc:'Colourful traditions captured beautifully', photos:[
       {src:'gallery-mehndi.png', cap:'Mehndi Ceremony — Close-up'},
       {src:'gallery-event.png', cap:'Haldi Ceremony Fun'},
       {src:'gallery-baraat.png', cap:'Sangeet Dance'},
@@ -1166,7 +1166,7 @@
       {src:'gallery-mehndi.png', cap:'Traditional Maternity'},
       {src:'gallery-drone.png', cap:'Aerial Outdoor Shoot'}
     ]},
-    newborn:      { icon:'👶', title:'Newborn Photoshoot', desc:'Tiny toes, peaceful sleeps, precious first days', photos:[
+    newborn:      { icon:'🍼', title:'Newborn Photoshoot', desc:'Tiny toes, peaceful sleeps, precious first days', photos:[
       {src:'svc-portrait.png', cap:'Newborn Portrait'},
       {src:'gallery-wedding2.png', cap:'Family with Newborn'},
       {src:'gallery-mehndi.png', cap:'Newborn Details'},
@@ -1193,6 +1193,74 @@
   };
 
   let lbPhotos = [], lbIdx = 0;
+
+  window.initDynamicServices = function(servicesList) {
+    if (!servicesList || !Array.isArray(servicesList)) return;
+
+    // 1. Populate the SERVICES object dynamically (clearing existing first)
+    for (const k in SERVICES) { delete SERVICES[k]; }
+    servicesList.forEach(function(svc) {
+      SERVICES[svc.id] = {
+        icon: svc.icon,
+        title: svc.name,
+        desc: svc.desc,
+        photos: svc.photos || []
+      };
+    });
+
+    // 2. Populate the service dropdown in booking form
+    const svcSelect = document.getElementById('fService');
+    if (svcSelect) {
+      svcSelect.innerHTML = '<option value="">Select a service…</option>';
+      servicesList.forEach(function(svc) {
+        const opt = document.createElement('option');
+        opt.value = svc.name;
+        opt.textContent = svc.icon + ' ' + svc.name;
+        svcSelect.appendChild(opt);
+      });
+      // Append Full Wedding Package if not present
+      const hasFullPackage = servicesList.some(function(svc) { return svc.name === 'Full Wedding Package'; });
+      if (!hasFullPackage) {
+        const opt = document.createElement('option');
+        opt.value = 'Full Wedding Package';
+        opt.textContent = 'Full Wedding Package (All Events)';
+        svcSelect.appendChild(opt);
+      }
+    }
+
+    // 3. Render service tiles dynamically
+    const gridWedding = document.getElementById('gridWedding');
+    const gridEvents = document.getElementById('gridEvents');
+    const gridPortraits = document.getElementById('gridPortraits');
+
+    if (gridWedding) gridWedding.innerHTML = '';
+    if (gridEvents) gridEvents.innerHTML = '';
+    if (gridPortraits) gridPortraits.innerHTML = '';
+
+    servicesList.forEach(function(svc) {
+      let gridEl = null;
+      if (svc.group === 'Wedding & Ceremonies') gridEl = gridWedding;
+      else if (svc.group === 'Events & Special Occasions') gridEl = gridEvents;
+      else if (svc.group === 'Portrait & Specialty Photography') gridEl = gridPortraits;
+
+      if (!gridEl) return;
+
+      const btn = document.createElement('button');
+      btn.className = 'svc-tile';
+      btn.setAttribute('onclick', "openGallery('" + svc.id + "')");
+      
+      const bgImg = svc.bg || 'gallery-wedding.png';
+      btn.innerHTML = 
+        '<div class="svc-tile-bg" style="background-image:url(\'' + bgImg + '\')"></div>' +
+        '<div class="svc-tile-ov"></div>' +
+        '<div class="svc-tile-ico">' + svc.icon + '</div>' +
+        '<div class="svc-tile-body">' +
+          '<div class="svc-tile-name">' + svc.name + '</div>' +
+          '<div class="svc-tile-cta">View Photos ›</div>' +
+        '</div>';
+      gridEl.appendChild(btn);
+    });
+  };
 
   window.openGallery = function(key) {
     const data = SERVICES[key];

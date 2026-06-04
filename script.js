@@ -480,23 +480,28 @@
       const dbResp = await fetch('gallery_db.json?t=' + Date.now());
       if (dbResp.ok) {
         const data = await dbResp.json();
-        if (data && Array.isArray(data.gallery)) {
-          // Store in a global variable for index.html's openGallery to access
-          window.customGalleryDb = data.gallery;
+        if (data) {
+          if (data.budgets) {
+            window.customBudgetsDb = data.budgets;
+          }
+          if (Array.isArray(data.gallery)) {
+            // Store in a global variable for index.html's openGallery to access
+            window.customGalleryDb = data.gallery;
 
-          data.gallery.forEach(item => {
-            // Check if already loaded to avoid duplicates
-            if (!galleryItems.some(existing => existing.src === item.src)) {
-              // Prepend live public items
-              galleryItems.unshift({
-                src: item.src,
-                type: item.type || 'photo',
-                cap: item.cap || 'MVR Work',
-                category: item.category || 'all',
-                isNew: true
-              });
-            }
-          });
+            data.gallery.forEach(item => {
+              // Check if already loaded to avoid duplicates
+              if (!galleryItems.some(existing => existing.src === item.src)) {
+                // Prepend live public items
+                galleryItems.unshift({
+                  src: item.src,
+                  type: item.type || 'photo',
+                  cap: item.cap || 'MVR Work',
+                  category: item.category || 'all',
+                  isNew: true
+                });
+              }
+            });
+          }
         }
       }
     } catch (err) {
@@ -805,33 +810,41 @@
   if (fService && fBudget) {
     fService.addEventListener('change', () => {
       const val = fService.value;
-      if (val === 'Full Wedding Package') {
-        fBudget.value = 'Above ₹1,00,000';
-      } else if (val === 'Indian Wedding Photography' || 
-                 val === 'Candid Wedding Photography' || 
-                 val === 'Wedding Videographers') {
-        fBudget.value = '₹50,000 – ₹1,00,000';
-      } else if (val === 'Pre-Wedding Shoot' || 
-                 val === 'Baraat & Reception' || 
-                 val === 'Mehndi & Haldi Ceremony' || 
-                 val === 'Sangeet Ceremony' || 
-                 val === 'Engagement Photoshoot' || 
-                 val === 'Event Photographers' || 
-                 val === 'House Warming Photoshoot' || 
-                 val === 'Upanayanam Photography' || 
-                 val === 'Album Design & Print') {
-        fBudget.value = '₹25,000 – ₹50,000';
-      } else if (val === 'Drone Aerial Photography' || 
-                 val === 'Birthday Photoshoot' || 
-                 val === 'Naming Ceremony' || 
-                 val === 'Family Photoshoot' || 
-                 val === 'Maternity Photoshoot' || 
-                 val === 'Newborn Photoshoot' || 
-                 val === 'Portfolio Shoot') {
-        fBudget.value = '₹10,000 – ₹25,000';
-      } else {
+      if (!val) {
         fBudget.value = '';
+        return;
       }
+
+      // Check if custom budget is loaded from gallery_db.json
+      if (window.customBudgetsDb && window.customBudgetsDb[val]) {
+        fBudget.value = window.customBudgetsDb[val];
+        return;
+      }
+
+      // Default budget mapping
+      const defaults = {
+        "Wedding Photographers": "₹50,000 – ₹1,00,000",
+        "Pre Wedding Photoshoot": "₹25,000 – ₹50,000",
+        "Baraat & Reception": "₹25,000 – ₹50,000",
+        "Mehndi & Haldi": "₹25,000 – ₹50,000",
+        "Candid Wedding Photography": "₹50,000 – ₹1,00,000",
+        "Wedding Videographers": "₹50,000 – ₹1,00,000",
+        "Sangeet Ceremony": "₹25,000 – ₹50,000",
+        "Engagement Photoshoot": "₹25,000 – ₹50,000",
+        "Drone Aerial Photography": "₹10,000 – ₹25,000",
+        "Event Photographers": "₹25,000 – ₹50,000",
+        "Birthday Photoshoot": "₹10,000 – ₹25,000",
+        "House Warming Photoshoot": "₹25,000 – ₹50,000",
+        "Naming Ceremony": "₹10,000 – ₹25,000",
+        "Upanayanam Photography": "₹25,000 – ₹50,000",
+        "Family Photoshoot": "₹10,000 – ₹25,000",
+        "Maternity Photoshoot": "₹10,000 – ₹25,000",
+        "Newborn Photoshoot": "₹10,000 – ₹25,000",
+        "Portfolio Shoot": "₹10,000 – ₹25,000",
+        "Album Design & Print": "₹25,000 – ₹50,000",
+        "Full Wedding Package": "Above ₹1,00,000"
+      };
+      fBudget.value = defaults[val] || '';
     });
   }
 

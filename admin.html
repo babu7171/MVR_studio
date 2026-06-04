@@ -296,6 +296,7 @@
     <div class="admin-tabs">
       <button class="admin-tab active" data-tab="bookings">📅 Booking Requests</button>
       <button class="admin-tab" data-tab="gallery">📸 Portfolio Gallery</button>
+      <button class="admin-tab" data-tab="budgets">💰 Service Budgets</button>
       <button class="admin-tab" data-tab="stats">⚙️ Website Counters</button>
     </div>
 
@@ -357,7 +358,7 @@
               <option value="all">General Gallery (All)</option>
               <option value="wedding">💍 Wedding Photographers</option>
               <option value="baraat">🐴 Baraat & Reception</option>
-              <option value="mehndi">🌸 Mehndi & Haldi Ceremony</option>
+              <option value="mehndi">🌸 Mehndi & Haldi</option>
               <option value="candid">📷 Candid Wedding Photography</option>
               <option value="videographers">🎬 Wedding Videographers</option>
               <option value="sangeet">💃 Sangeet Ceremony</option>
@@ -370,7 +371,7 @@
               <option value="upanayanam">🙏 Upanayanam Photography</option>
               <option value="family">👨‍👩‍👧‍👦 Family Photoshoot</option>
               <option value="maternity">🤰 Maternity Photoshoot</option>
-              <option value="newborn">👶 Newborn Photoshoot</option>
+              <option value="newborn">🍼 Newborn Photoshoot</option>
               <option value="portfolio">👤 Portfolio Shoot</option>
               <option value="album">📚 Album Design & Print</option>
             </select>
@@ -404,7 +405,7 @@
               <option value="prewedding">💑 Pre Wedding Photoshoot</option>
               <option value="wedding">💍 Wedding Photographers</option>
               <option value="baraat">🐴 Baraat & Reception</option>
-              <option value="mehndi">🌸 Mehndi & Haldi Ceremony</option>
+              <option value="mehndi">🌸 Mehndi & Haldi</option>
               <option value="candid">📷 Candid Wedding Photography</option>
               <option value="videographers">🎬 Wedding Videographers</option>
               <option value="sangeet">💃 Sangeet Ceremony</option>
@@ -417,7 +418,7 @@
               <option value="upanayanam">🙏 Upanayanam Photography</option>
               <option value="family">👨‍👩‍👧‍👦 Family Photoshoot</option>
               <option value="maternity">🤰 Maternity Photoshoot</option>
-              <option value="newborn">👶 Newborn Photoshoot</option>
+              <option value="newborn">🍼 Newborn Photoshoot</option>
               <option value="portfolio">👤 Portfolio Shoot</option>
               <option value="album">📚 Album Design & Print</option>
             </select>
@@ -426,6 +427,28 @@
         <div id="adminGalPreview" class="admin-gal-preview">
           <!-- Dynamically populated -->
         </div>
+      </div>
+    </div>
+
+    <!-- SERVICE BUDGETS PANEL -->
+    <div id="tab-budgets" class="admin-tab-content" style="display: none;">
+      <div class="admin-panel-card">
+        <h3>Edit Services &amp; Budgets</h3>
+        <p style="font-size: 0.85rem; color: var(--g3); margin-top: -10px; margin-bottom: 25px;">
+          Customize service emojis, names, descriptions, and default budget ranges that auto-fill in the booking form when a customer selects a service.<br/>
+          💡 <strong>Notice:</strong> Changes made here require a GitHub connection and will be synced directly to the live website (gallery_db.json).
+        </p>
+        
+        <form id="adminBudgetsForm" style="display: flex; flex-direction: column; gap: 20px;">
+          <div id="budgetsListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+            <!-- Dynamically populated via JS -->
+          </div>
+          
+          <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+            <button type="submit" id="btnSaveBudgets" class="btn-gold" style="padding: 12px 30px; border-radius: var(--r1); border: none; font-weight: 700; cursor: pointer;">Save Services &amp; Budgets</button>
+            <button type="button" id="btnResetBudgets" class="btn-logout" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--white); border-radius: var(--r1); cursor: pointer; padding: 12px 20px; font-weight: 600;">Reset to Defaults</button>
+          </div>
+        </form>
       </div>
     </div>
 

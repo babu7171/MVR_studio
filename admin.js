@@ -67,6 +67,7 @@
     renderBookings();
     initStatsEditor();
     initGalleryManager();
+    initBudgetsManager();
   }
 
   // Tab toggling
@@ -735,4 +736,227 @@
     }
   }
 
+  // ── Budgets & Services Editor Tab Logic ──
+  const DEFAULT_SERVICES_FALLBACK = [
+    { id: "wedding", icon: "💍", name: "Wedding Photographers", desc: "Full coverage — Mandap, Pheras, Vidaai & Portraits", group: "Wedding & Ceremonies", budget: "₹50,000 – ₹1,00,000", bg: "gallery-wedding.png" },
+    { id: "prewedding", icon: "💑", name: "Pre Wedding Photoshoot", desc: "Romantic couple sessions at heritage & scenic locations", group: "Wedding & Ceremonies", budget: "₹25,000 – ₹50,000", bg: "svc-prewedding.png" },
+    { id: "baraat", icon: "🐴", name: "Baraat & Reception", desc: "Grand procession with dhol & band baja to the elegant Reception", group: "Wedding & Ceremonies", budget: "₹25,000 – ₹50,000", bg: "gallery-baraat.png" },
+    { id: "mehndi", icon: "🌸", name: "Mehndi & Haldi", desc: "Colourful traditions captured beautifully", group: "Wedding & Ceremonies", budget: "₹25,000 – ₹50,000", bg: "gallery-mehndi.png" },
+    { id: "candid", icon: "📷", name: "Candid Wedding Photography", desc: "Natural, unposed moments full of genuine emotion", group: "Wedding & Ceremonies", budget: "₹50,000 – ₹1,00,000", bg: "gallery-wedding2.png" },
+    { id: "videographers", icon: "🎬", name: "Wedding Videographers", desc: "Bollywood-style cinematic 4K wedding films", group: "Wedding & Ceremonies", budget: "₹50,000 – ₹1,00,000", bg: "gallery-drone2.png" },
+    { id: "sangeet", icon: "💃", name: "Sangeet Ceremony", desc: "Vibrant dance & celebration photography", group: "Wedding & Ceremonies", budget: "₹25,000 – ₹50,000", bg: "gallery-event.png" },
+    { id: "engagement", icon: "💎", name: "Engagement Photoshoot", desc: "Capture the joy of your commitment day", group: "Wedding & Ceremonies", budget: "₹25,000 – ₹50,000", bg: "svc-prewedding.png" },
+    { id: "drone", icon: "🚁", name: "Drone Aerial Photography", desc: "DGCA-licensed stunning aerial shots from the sky", group: "Wedding & Ceremonies", budget: "₹10,000 – ₹25,000", bg: "gallery-drone.png" },
+    { id: "events", icon: "🎉", name: "Event Photographers", desc: "Corporate events, grand parties & cultural programs", group: "Events & Special Occasions", budget: "₹25,000 – ₹50,000", bg: "svc-event.png" },
+    { id: "birthday", icon: "🎂", name: "Birthday Photoshoot", desc: "Fun & vibrant birthday celebration photography", group: "Events & Special Occasions", budget: "₹10,000 – ₹25,000", bg: "gallery-event.png" },
+    { id: "housewarming", icon: "🏠", name: "House Warming Photoshoot", desc: "Griha Pravesh pooja & family moments", group: "Events & Special Occasions", budget: "₹25,000 – ₹50,000", bg: "gallery-event.png" },
+    { id: "naming", icon: "👶", name: "Naming Ceremony", desc: "Namkaran blessings & first name-giving ritual", group: "Events & Special Occasions", budget: "₹10,000 – ₹25,000", bg: "gallery-event.png" },
+    { id: "upanayanam", icon: "🙏", name: "Upanayanam Photography", desc: "Sacred thread ceremony — every ritual covered", group: "Events & Special Occasions", budget: "₹25,000 – ₹50,000", bg: "gallery-event.png" },
+    { id: "family", icon: "👨‍👩‍👧‍👦", name: "Family Photoshoot", desc: "Warm portraits capturing the bond of your family", group: "Events & Special Occasions", budget: "₹10,000 – ₹25,000", bg: "gallery-event.png" },
+    { id: "maternity", icon: "🤰", name: "Maternity Photoshoot", desc: "Celebrating the glow of motherhood", group: "Portrait & Specialty Photography", budget: "₹10,000 – ₹25,000", bg: "svc-portrait.png" },
+    { id: "newborn", icon: "🍼", name: "Newborn Photoshoot", desc: "Tiny toes, peaceful sleeps, precious first days", group: "Portrait & Specialty Photography", budget: "₹10,000 – ₹25,000", bg: "svc-portrait.png" },
+    { id: "portfolio", icon: "👤", name: "Portfolio Shoot", desc: "Professional portfolios for models, actors & professionals", group: "Portrait & Specialty Photography", budget: "₹10,000 – ₹25,000", bg: "svc-portrait.png" },
+    { id: "album", icon: "📚", name: "Album Design & Print", desc: "Premium custom wedding albums & photo books", group: "Portrait & Specialty Photography", budget: "₹25,000 – ₹50,000", bg: "gallery-wedding2.png" }
+  ];
+ 
+  const BUDGET_OPTIONS = [
+    "Under ₹10,000",
+    "₹10,000 – ₹25,000",
+    "₹25,000 – ₹50,000",
+    "₹50,000 – ₹1,00,000",
+    "Above ₹1,00,000"
+  ];
+ 
+  function initBudgetsManager() {
+    const budgetsForm = document.getElementById('adminBudgetsForm');
+    const container = document.getElementById('budgetsListContainer');
+    const btnReset = document.getElementById('btnResetBudgets');
+     
+    if (!container || !budgetsForm) return;
+     
+    const repoOwner = 'babu7171';
+    const repoName = 'MVR_studio';
+    let currentServices = [];
+ 
+    function renderServicesInputs(servicesList) {
+      const listToRender = (servicesList && servicesList.length > 0) ? servicesList : DEFAULT_SERVICES_FALLBACK;
+      
+      container.innerHTML = listToRender.map((svc, index) => {
+        const currentBudget = svc.budget || '';
+        
+        const optionsHTML = BUDGET_OPTIONS.map(opt => {
+          const selectedAttr = (opt === currentBudget) ? 'selected' : '';
+          return `<option value="${opt}" ${selectedAttr}>${opt}</option>`;
+        }).join('');
+        
+        const svcId = 'svc_' + svc.id;
+        
+        return `
+          <div class="admin-service-edit-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:var(--r2); padding:20px; display:flex; flex-direction:column; gap:12px;" data-index="${index}" data-id="${svc.id}" data-group="${svc.group}" data-bg="${svc.bg || ''}">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 8px;">
+              <span style="font-size:0.75rem; color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${svc.group}</span>
+              <span style="font-size:0.7rem; color:var(--g4);">Key: ${svc.id}</span>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 60px 1fr; gap:12px;">
+              <div class="fg">
+                <label style="display:block; font-size:0.75rem; color:var(--g3); margin-bottom:4px;">Emoji</label>
+                <input type="text" class="svc-edit-icon" value="${svc.icon || ''}" style="width:100%; text-align:center; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); font-size:1.1rem; outline:none;"/>
+              </div>
+              <div class="fg">
+                <label style="display:block; font-size:0.75rem; color:var(--g3); margin-bottom:4px;">Service Name</label>
+                <input type="text" class="svc-edit-name" value="${svc.name || ''}" style="width:100%; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); font-size:0.85rem; outline:none;"/>
+              </div>
+            </div>
+            
+            <div class="fg">
+              <label style="display:block; font-size:0.75rem; color:var(--g3); margin-bottom:4px;">Description</label>
+              <textarea class="svc-edit-desc" rows="2" style="width:100%; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); font-size:0.8rem; outline:none; font-family:sans-serif; resize:none;">${svc.desc || ''}</textarea>
+            </div>
+            
+            <div class="fg">
+              <label style="display:block; font-size:0.75rem; color:var(--g3); margin-bottom:4px;">Default Budget Range</label>
+              <select class="svc-edit-budget" style="width:100%; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); font-size:0.85rem; outline:none; cursor:pointer;">
+                <option value="">Select range…</option>
+                ${optionsHTML}
+              </select>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+ 
+    async function loadBudgets() {
+      try {
+        const resp = await fetch('gallery_db.json?t=' + Date.now());
+        if (resp.ok) {
+          const data = await resp.json();
+          currentServices = data.services || [];
+        }
+      } catch (err) {
+        console.warn('Could not load current budgets from gallery_db.json', err);
+      }
+      renderServicesInputs(currentServices);
+    }
+ 
+    budgetsForm.addEventListener('submit', async e => {
+      e.preventDefault();
+       
+      const token = localStorage.getItem('mvr_github_token') || '';
+      if (!token) {
+        alert('Please connect your GitHub account under the "Portfolio Gallery" tab first to save changes to the live site!');
+        return;
+      }
+       
+      const updatedServices = [];
+      const cards = container.querySelectorAll('.admin-service-edit-card');
+      cards.forEach(card => {
+        const id = card.dataset.id;
+        const group = card.dataset.group;
+        const bg = card.dataset.bg;
+        const icon = card.querySelector('.svc-edit-icon').value.trim();
+        const name = card.querySelector('.svc-edit-name').value.trim();
+        const desc = card.querySelector('.svc-edit-desc').value.trim();
+        const budget = card.querySelector('.svc-edit-budget').value;
+        
+        // Find existing service item to preserve its default photos array
+        const existingSvc = currentServices.find(s => s.id === id) || {};
+        const photos = existingSvc.photos || [];
+        
+        updatedServices.push({
+          id: id,
+          icon: icon,
+          name: name,
+          desc: desc,
+          group: group,
+          budget: budget,
+          bg: bg,
+          photos: photos
+        });
+      });
+       
+      try {
+        const btnSave = document.getElementById('btnSaveBudgets');
+        if (btnSave) {
+          btnSave.disabled = true;
+          btnSave.textContent = 'Saving to GitHub...';
+        }
+         
+        const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
+        const dbGetResp = await fetch(dbUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+         
+        if (!dbGetResp.ok) {
+          const errJson = await dbGetResp.json().catch(() => ({}));
+          throw new Error(errJson.message || `Failed to fetch database file from GitHub.`);
+        }
+         
+        const dbGetData = await dbGetResp.json();
+        const dbSha = dbGetData.sha;
+        const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
+        const dbContentObj = JSON.parse(decoded);
+         
+        // Update the services field
+        dbContentObj.services = updatedServices;
+        
+        // Also keep updated budgets mapping for backwards compatibility
+        dbContentObj.budgets = {};
+        updatedServices.forEach(s => {
+          dbContentObj.budgets[s.name] = s.budget;
+        });
+         
+        const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
+        const dbUpdateBody = {
+          message: `Update services list & budgets via Admin panel`,
+          content: updatedDbBase64,
+          branch: 'main',
+          sha: dbSha
+        };
+         
+        const dbPutResp = await fetch(dbUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(dbUpdateBody)
+        });
+         
+        if (!dbPutResp.ok) {
+          const errJson = await dbPutResp.json().catch(() => ({}));
+          throw new Error(errJson.message || `Failed to write database file to GitHub.`);
+        }
+         
+        alert('Service settings saved successfully to GitHub! The changes will be live on the homepage in a few minutes.');
+        currentServices = updatedServices;
+         
+      } catch (err) {
+        console.error(err);
+        alert('Failed to save services: ' + err.message);
+      } finally {
+        const btnSave = document.getElementById('btnSaveBudgets');
+        if (btnSave) {
+          btnSave.disabled = false;
+          btnSave.textContent = 'Save Budget Ranges';
+        }
+      }
+    });
+ 
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset all service settings to their default values? (Note: you must click Save to write the changes to GitHub).')) {
+          renderServicesInputs(DEFAULT_SERVICES_FALLBACK);
+        }
+      });
+    }
+ 
+    loadBudgets();
+  }
+ 
 })();

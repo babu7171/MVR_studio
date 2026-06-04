@@ -1,3 +1,161 @@
 {
-  "gallery": []
+  "gallery": [],
+  "services": [
+    { "id": "wedding", "icon": "💍", "name": "Wedding Photographers", "desc": "Full coverage — Mandap, Pheras, Vidaai & Portraits", "group": "Wedding & Ceremonies", "budget": "₹50,000 – ₹1,00,000", "bg": "gallery-wedding.png", "photos": [
+      {"src": "gallery-wedding.png", "cap": "Indian Wedding — Mandap Ceremony"},
+      {"src": "gallery-wedding2.png", "cap": "Bride & Groom Portraits"},
+      {"src": "gallery-baraat.png", "cap": "Baraat Procession"},
+      {"src": "gallery-drone.png", "cap": "Aerial Wedding Shot"},
+      {"src": "gallery-mehndi.png", "cap": "Mehndi Ceremony"},
+      {"src": "gallery-event.png", "cap": "Sangeet Night"},
+      {"src": "svc-wedding.png", "cap": "Couple Portrait"},
+      {"src": "gallery-drone2.png", "cap": "Cinematic Film Still"}
+    ]},
+    { "id": "prewedding", "icon": "💑", "name": "Pre Wedding Photoshoot", "desc": "Romantic couple sessions at heritage & scenic locations", "group": "Wedding & Ceremonies", "budget": "₹25,000 – ₹50,000", "bg": "svc-prewedding.png", "photos": [
+      {"src": "svc-prewedding.png", "cap": "Pre-Wedding — Heritage Location"},
+      {"src": "gallery-wedding2.png", "cap": "Romantic Couple Portrait"},
+      {"src": "gallery-drone.png", "cap": "Aerial Pre-Wedding Shot"},
+      {"src": "gallery-mehndi.png", "cap": "Bridal Preparation"},
+      {"src": "svc-wedding.png", "cap": "Couple Photography"},
+      {"src": "gallery-drone2.png", "cap": "Cinematic Pre-Wedding Film"}
+    ]},
+    { "id": "baraat", "icon": "🐴", "name": "Baraat & Reception", "desc": "Grand procession with dhol & band baja to the elegant Reception", "group": "Wedding & Ceremonies", "budget": "₹25,000 – ₹50,000", "bg": "gallery-baraat.png", "photos": [
+      {"src": "gallery-baraat.png", "cap": "Baraat Grand Procession"},
+      {"src": "gallery-drone.png", "cap": "Aerial Baraat Drone Shot"},
+      {"src": "gallery-wedding.png", "cap": "Reception Ceremony"},
+      {"src": "gallery-wedding2.png", "cap": "Groom Portrait"},
+      {"src": "gallery-event.png", "cap": "Celebration Moments"},
+      {"src": "gallery-drone2.png", "cap": "Cinematic Coverage"}
+    ]},
+    { "id": "mehndi", "icon": "🌸", "name": "Mehndi & Haldi", "desc": "Colourful traditions captured beautifully", "group": "Wedding & Ceremonies", "budget": "₹25,000 – ₹50,000", "bg": "gallery-mehndi.png", "photos": [
+      {"src": "gallery-mehndi.png", "cap": "Mehndi Ceremony — Close-up"},
+      {"src": "gallery-event.png", "cap": "Haldi Ceremony Fun"},
+      {"src": "gallery-baraat.png", "cap": "Sangeet Dance"},
+      {"src": "gallery-wedding.png", "cap": "Bride Portraits"},
+      {"src": "gallery-wedding2.png", "cap": "Family Celebrations"},
+      {"src": "svc-event.png", "cap": "Candid Moments"}
+    ]},
+    { "id": "candid", "icon": "📷", "name": "Candid Wedding Photography", "desc": "Natural, unposed moments full of genuine emotion", "group": "Wedding & Ceremonies", "budget": "₹50,000 – ₹1,00,000", "bg": "gallery-wedding2.png", "photos": [
+      {"src": "gallery-wedding2.png", "cap": "Candid Bridal Moment"},
+      {"src": "gallery-wedding.png", "cap": "Genuine Emotions"},
+      {"src": "gallery-event.png", "cap": "Family Candid"},
+      {"src": "gallery-baraat.png", "cap": "Celebration Candid"},
+      {"src": "gallery-mehndi.png", "cap": "Mehndi Candid"},
+      {"src": "svc-wedding.png", "cap": "Natural Moments"},
+      {"src": "gallery-drone2.png", "cap": "Cinematic Capture"},
+      {"src": "gallery-drone.png", "cap": "Aerial Candid"}
+    ]},
+    { "id": "videographers", "icon": "🎬", "name": "Wedding Videographers", "desc": "Bollywood-style cinematic 4K wedding films", "group": "Wedding & Ceremonies", "budget": "₹50,000 – ₹1,00,000", "bg": "gallery-drone2.png", "photos": [
+      {"src": "gallery-drone2.png", "cap": "4K Cinematic Wedding Film"},
+      {"src": "gallery-drone.png", "cap": "Aerial Drone Footage"},
+      {"src": "gallery-wedding.png", "cap": "Wedding Film Still"},
+      {"src": "gallery-baraat.png", "cap": "Baraat Film Coverage"},
+      {"src": "gallery-event.png", "cap": "Sangeet Film"},
+      {"src": "gallery-wedding2.png", "cap": "Couple Highlight"}
+    ]},
+    { "id": "sangeet", "icon": "💃", "name": "Sangeet Ceremony", "desc": "Vibrant dance & celebration photography", "group": "Wedding & Ceremonies", "budget": "₹25,000 – ₹50,000", "bg": "gallery-event.png", "photos": [
+      {"src": "gallery-event.png", "cap": "Sangeet Night — Stage Performance"},
+      {"src": "svc-event.png", "cap": "Dance Celebration"},
+      {"src": "gallery-baraat.png", "cap": "Family Dance"},
+      {"src": "gallery-mehndi.png", "cap": "Mehndi Night"},
+      {"src": "gallery-wedding2.png", "cap": "Couple Dance"},
+      {"src": "gallery-drone2.png", "cap": "Aerial Stage Shot"}
+    ]},
+    { "id": "engagement", "icon": "💎", "name": "Engagement Photoshoot", "desc": "Capture the joy of your commitment day", "group": "Wedding & Ceremonies", "budget": "₹25,000 – ₹50,000", "bg": "svc-prewedding.png", "photos": [
+      {"src": "svc-prewedding.png", "cap": "Engagement Ceremony"},
+      {"src": "gallery-wedding.png", "cap": "Ring Close-up"},
+      {"src": "gallery-wedding2.png", "cap": "Couple Portrait"},
+      {"src": "gallery-mehndi.png", "cap": "Celebration Moments"},
+      {"src": "gallery-event.png", "cap": "Family Gathering"},
+      {"src": "svc-wedding.png", "cap": "Romantic Shot"}
+    ]},
+    { "id": "drone", "icon": "🚁", "name": "Drone Aerial Photography", "desc": "DGCA-licensed stunning aerial shots from the sky", "group": "Wedding & Ceremonies", "budget": "₹10,000 – ₹25,000", "bg": "gallery-drone.png", "photos": [
+      {"src": "gallery-drone.png", "cap": "Aerial Drone Shot"},
+      {"src": "gallery-drone2.png", "cap": "Cinematic Drone Footage"},
+      {"src": "gallery-baraat.png", "cap": "Baraat Aerial View"},
+      {"src": "gallery-wedding.png", "cap": "Wedding Venue Aerial"},
+      {"src": "gallery-event.png", "cap": "Event Aerial Shot"},
+      {"src": "gallery-wedding2.png", "cap": "Landscape Drone"}
+    ]},
+    { "id": "events", "icon": "🎉", "name": "Event Photographers", "desc": "Corporate events, grand parties & cultural programs", "group": "Events & Special Occasions", "budget": "₹25,000 – ₹50,000", "bg": "svc-event.png", "photos": [
+      {"src": "svc-event.png", "cap": "Corporate Event"},
+      {"src": "gallery-event.png", "cap": "Cultural Program"},
+      {"src": "gallery-baraat.png", "cap": "Grand Celebration"},
+      {"src": "gallery-drone2.png", "cap": "Aerial Event Shot"},
+      {"src": "gallery-wedding2.png", "cap": "Award Ceremony"},
+      {"src": "gallery-mehndi.png", "cap": "Traditional Event"}
+    ]},
+    { "id": "birthday", "icon": "🎂", "name": "Birthday Photoshoot", "desc": "Fun & vibrant birthday celebration photography", "group": "Events & Special Occasions", "budget": "₹10,000 – ₹25,000", "bg": "gallery-event.png", "photos": [
+      {"src": "gallery-event.png", "cap": "Birthday Celebration"},
+      {"src": "svc-event.png", "cap": "Cake Cutting Moment"},
+      {"src": "gallery-baraat.png", "cap": "Birthday Dance"},
+      {"src": "gallery-wedding2.png", "cap": "Candid Birthday Shot"},
+      {"src": "gallery-mehndi.png", "cap": "Decoration Details"},
+      {"src": "gallery-drone2.png", "cap": "Overhead Celebration"}
+    ]},
+    { "id": "housewarming", "icon": "🏠", "name": "House Warming Photoshoot", "desc": "Griha Pravesh pooja & family moments", "group": "Events & Special Occasions", "budget": "₹25,000 – ₹50,000", "bg": "gallery-event.png", "photos": [
+      {"src": "gallery-event.png", "cap": "Griha Pravesh Pooja"},
+      {"src": "gallery-mehndi.png", "cap": "Family Blessings"},
+      {"src": "gallery-wedding.png", "cap": "New Home Portrait"},
+      {"src": "gallery-baraat.png", "cap": "Celebration Moments"},
+      {"src": "svc-portrait.png", "cap": "Family Portrait"},
+      {"src": "gallery-wedding2.png", "cap": "Candid Happiness"}
+    ]},
+    { "id": "naming", "icon": "👶", "name": "Naming Ceremony", "desc": "Namkaran blessings & first name-giving ritual", "group": "Events & Special Occasions", "budget": "₹10,000 – ₹25,000", "bg": "gallery-event.png", "photos": [
+      {"src": "svc-portrait.png", "cap": "Naming Ceremony Ritual"},
+      {"src": "gallery-event.png", "cap": "Family Blessings"},
+      {"src": "gallery-mehndi.png", "cap": "Pooja Moments"},
+      {"src": "gallery-wedding.png", "cap": "Traditional Ceremony"},
+      {"src": "gallery-baraat.png", "cap": "Celebration Candid"},
+      {"src": "gallery-wedding2.png", "cap": "Grandparent Moments"}
+    ]},
+    { "id": "upanayanam", "icon": "🙏", "name": "Upanayanam Photography", "desc": "Sacred thread ceremony — every ritual covered", "group": "Events & Special Occasions", "budget": "₹25,000 – ₹50,000", "bg": "gallery-event.png", "photos": [
+      {"src": "gallery-event.png", "cap": "Upanayanam Ritual"},
+      {"src": "gallery-mehndi.png", "cap": "Sacred Thread Ceremony"},
+      {"src": "svc-portrait.png", "cap": "Boy Portrait"},
+      {"src": "gallery-wedding.png", "cap": "Family Portrait"},
+      {"src": "gallery-baraat.png", "cap": "Celebration Moments"},
+      {"src": "gallery-wedding2.png", "cap": "Candid Blessings"}
+    ]},
+    { "id": "family", "icon": "👨‍👩‍👧‍👦", "name": "Family Photoshoot", "desc": "Warm portraits capturing the bond of your family", "group": "Events & Special Occasions", "budget": "₹10,000 – ₹25,000", "bg": "gallery-event.png", "photos": [
+      {"src": "svc-portrait.png", "cap": "Family Portrait"},
+      {"src": "gallery-event.png", "cap": "Family Celebration"},
+      {"src": "gallery-wedding2.png", "cap": "Candid Family"},
+      {"src": "gallery-mehndi.png", "cap": "Traditional Family"},
+      {"src": "gallery-baraat.png", "cap": "Festival Family Shot"},
+      {"src": "gallery-wedding.png", "cap": "Formal Family Portrait"}
+    ]},
+    { "id": "maternity", "icon": "🤰", "name": "Maternity Photoshoot", "desc": "Celebrating the glow of motherhood", "group": "Portrait & Specialty Photography", "budget": "₹10,000 – ₹25,000", "bg": "svc-portrait.png", "photos": [
+      {"src": "svc-portrait.png", "cap": "Maternity Portrait"},
+      {"src": "gallery-wedding.png", "cap": "Couple Maternity Shot"},
+      {"src": "gallery-wedding2.png", "cap": "Outdoor Maternity"},
+      {"src": "svc-prewedding.png", "cap": "Garden Maternity"},
+      {"src": "gallery-mehndi.png", "cap": "Traditional Maternity"},
+      {"src": "gallery-drone.png", "cap": "Aerial Outdoor Shoot"}
+    ]},
+    { "id": "newborn", "icon": "🍼", "name": "Newborn Photoshoot", "desc": "Tiny toes, peaceful sleeps, precious first days", "group": "Portrait & Specialty Photography", "budget": "₹10,000 – ₹25,000", "bg": "svc-portrait.png", "photos": [
+      {"src": "svc-portrait.png", "cap": "Newborn Portrait"},
+      {"src": "gallery-wedding2.png", "cap": "Family with Newborn"},
+      {"src": "gallery-mehndi.png", "cap": "Newborn Details"},
+      {"src": "gallery-event.png", "cap": "Sleeping Baby"},
+      {"src": "gallery-wedding.png", "cap": "Parents with Baby"},
+      {"src": "gallery-baraat.png", "cap": "Newborn Family Portrait"}
+    ]},
+    { "id": "portfolio", "icon": "👤", "name": "Portfolio Shoot", "desc": "Professional portfolios for models, actors & professionals", "group": "Portrait & Specialty Photography", "budget": "₹10,000 – ₹25,000", "bg": "svc-portrait.png", "photos": [
+      {"src": "svc-portrait.png", "cap": "Model Portfolio"},
+      {"src": "gallery-wedding.png", "cap": "Fashion Portfolio"},
+      {"src": "gallery-wedding2.png", "cap": "Studio Portrait"},
+      {"src": "svc-prewedding.png", "cap": "Outdoor Portfolio"},
+      {"src": "gallery-drone.png", "cap": "Aerial Creative Shot"},
+      {"src": "gallery-event.png", "cap": "Lifestyle Portfolio"}
+    ]},
+    { "id": "album", "icon": "📚", "name": "Album Design & Print", "desc": "Premium custom wedding albums & photo books", "group": "Portrait & Specialty Photography", "budget": "₹25,000 – ₹50,000", "bg": "gallery-wedding2.png", "photos": [
+      {"src": "gallery-wedding2.png", "cap": "Premium Wedding Album"},
+      {"src": "gallery-wedding.png", "cap": "Photo Book Design"},
+      {"src": "gallery-mehndi.png", "cap": "Traditional Album"},
+      {"src": "gallery-event.png", "cap": "Event Photo Book"},
+      {"src": "gallery-baraat.png", "cap": "Family Album"},
+      {"src": "gallery-drone2.png", "cap": "Cinematic Album"}
+    ]}
+  ]
 }
