@@ -622,15 +622,25 @@
         e.preventDefault();
         handleUploadFiles(e.dataTransfer.files);
       });
-      dropZone.addEventListener('click', () => {
+      dropZone.addEventListener('click', (e) => {
+        if (e.target === fileInput) return;
         if (fileInput) fileInput.click();
       });
     }
 
     if (fileInput) {
+      fileInput.addEventListener('click', e => e.stopPropagation());
       fileInput.addEventListener('change', () => {
         handleUploadFiles(fileInput.files);
         fileInput.value = '';
+      });
+    }
+
+    const chooseBtn = dropZone ? dropZone.querySelector('.btn-gold') : null;
+    if (chooseBtn) {
+      chooseBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (fileInput) fileInput.click();
       });
     }
 
