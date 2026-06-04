@@ -1361,7 +1361,28 @@
   document.getElementById('gmOverlay').addEventListener('click', function(e){
     if (e.target === this) closeGallery();
   });
-  document.getElementById('gmBookLink').addEventListener('click', closeGallery);
+  document.getElementById('gmBookLink').addEventListener('click', function() {
+    closeGallery();
+    
+    const activeCategoryTitle = document.getElementById('gmTitle').textContent;
+    const svcSelect = document.getElementById('fService');
+    if (svcSelect && activeCategoryTitle) {
+      for (let i = 0; i < svcSelect.options.length; i++) {
+        if (svcSelect.options[i].text.includes(activeCategoryTitle) || svcSelect.options[i].value === activeCategoryTitle) {
+          svcSelect.selectedIndex = i;
+          // Trigger change event to auto-fill budget
+          svcSelect.dispatchEvent(new Event('change'));
+          break;
+        }
+      }
+    }
+    
+    // Set default number of guests to 150 if empty
+    const guestsInput = document.getElementById('fGuests');
+    if (guestsInput && !guestsInput.value) {
+      guestsInput.value = '150';
+    }
+  });
 
   function openLb(i) {
     lbIdx = i;
