@@ -229,84 +229,409 @@
 </section>
 
 <!-- ══ SERVICES ═════════════════════════════════════════ -->
-<section id="services" class="services">
+<style>
+/* ── SERVICES TILE GRID ─────────────────── */
+.svc-tile-section { background: var(--navy,#080c18); padding: 80px 0 60px; }
+.svc-tile-section .wrap { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+.svc-cat-label {
+  font-size: 0.68rem; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold,#c9a55a); margin: 40px 0 16px;
+  padding-bottom: 10px; border-bottom: 1px solid rgba(201,165,90,.15);
+}
+.svc-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 14px; margin-bottom: 10px;
+}
+.svc-tile {
+  position: relative; border-radius: 14px; overflow: hidden;
+  cursor: pointer; aspect-ratio: 4/3.2;
+  transition: transform .3s, box-shadow .3s;
+  box-shadow: 0 4px 18px rgba(0,0,0,.35);
+  border: none; background: none; padding: 0;
+}
+.svc-tile:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 14px 36px rgba(0,0,0,.55); }
+.svc-tile-bg {
+  position: absolute; inset: 0; background-size: cover;
+  background-position: center; transition: transform .5s;
+}
+.svc-tile:hover .svc-tile-bg { transform: scale(1.08); }
+.svc-tile-ov {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.78) 0%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.04) 100%);
+  transition: background .3s;
+}
+.svc-tile:hover .svc-tile-ov { background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.28) 55%, rgba(0,0,0,.1) 100%); }
+.svc-tile-ico {
+  position: absolute; top: 12px; left: 12px;
+  width: 34px; height: 34px; border-radius: 9px;
+  background: rgba(255,255,255,.13); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.18);
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+}
+.svc-tile-body { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 12px 14px; }
+.svc-tile-name { font-weight: 700; font-size: 0.8rem; color: #fff; line-height: 1.3; margin-bottom: 5px; }
+.svc-tile-cta {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.68rem; font-weight: 600; color: #c9a55a;
+  opacity: 0; transform: translateY(4px); transition: all .25s;
+}
+.svc-tile:hover .svc-tile-cta { opacity: 1; transform: translateY(0); }
+
+/* ── GALLERY MODAL ─────────────────── */
+.gm-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9000;
+  background: rgba(4,7,15,.97); flex-direction: column;
+  animation: gmFadeIn .25s ease;
+}
+.gm-overlay.open { display: flex; }
+@keyframes gmFadeIn { from { opacity:0; } to { opacity:1; } }
+.gm-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px; border-bottom: 1px solid rgba(201,165,90,.15);
+  background: rgba(8,12,24,.8); backdrop-filter: blur(16px);
+  flex-shrink: 0;
+}
+.gm-header-left { display: flex; align-items: center; gap: 12px; }
+.gm-icon { font-size: 1.6rem; }
+.gm-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 700; color: #f5f0e8; }
+.gm-title em { color: #c9a55a; font-style: italic; }
+.gm-desc { font-size: 0.75rem; color: rgba(245,240,232,.45); margin-top: 1px; }
+.gm-close {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #fff; cursor: pointer; transition: background .2s;
+  flex-shrink: 0;
+}
+.gm-close:hover { background: rgba(220,50,50,.3); }
+.gm-body {
+  flex: 1; overflow-y: auto; padding: 24px 28px;
+  scrollbar-width: thin; scrollbar-color: rgba(201,165,90,.3) transparent;
+}
+.gm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.gm-card {
+  border-radius: 12px; overflow: hidden; position: relative;
+  cursor: pointer; transition: transform .3s, box-shadow .3s;
+  background: #0d1225;
+}
+.gm-card:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,0,0,.5); }
+.gm-card img { width: 100%; height: 200px; object-fit: cover; display: block; transition: transform .4s; }
+.gm-card:hover img { transform: scale(1.05); }
+.gm-card-hover {
+  position: absolute; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .3s;
+}
+.gm-card:hover .gm-card-hover { opacity: 1; }
+.gm-zoom { width: 48px; height: 48px; border-radius: 50%; background: rgba(201,165,90,.9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: #080c18; font-weight: 900;
+  transform: scale(.7); transition: transform .25s;
+}
+.gm-card:hover .gm-zoom { transform: scale(1); }
+.gm-card-cap { padding: 10px 14px; font-size: 0.75rem; color: rgba(245,240,232,.45); }
+.gm-cta {
+  margin-top: 32px; padding: 32px 24px; border-radius: 16px; text-align: center;
+  background: rgba(201,165,90,.06); border: 1px solid rgba(201,165,90,.14);
+}
+.gm-cta h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; margin-bottom: 8px; }
+.gm-cta h3 em { color: #c9a55a; font-style: italic; }
+.gm-cta p { font-size: 0.85rem; color: rgba(245,240,232,.5); margin-bottom: 18px; }
+.gm-cta-btns { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.gm-btn-wa {
+  display: inline-flex; align-items: center; gap: 7px; padding: 11px 24px;
+  background: #25d366; border-radius: 50px; font-size: 0.84rem;
+  font-weight: 700; color: #fff; text-decoration: none; transition: all .2s;
+}
+.gm-btn-wa:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37,211,102,.3); }
+.gm-btn-book {
+  display: inline-flex; align-items: center; gap: 7px; padding: 11px 24px;
+  background: linear-gradient(135deg,#c9a55a,#b8913e); border-radius: 50px;
+  font-size: 0.84rem; font-weight: 700; color: #080c18; text-decoration: none; transition: all .2s;
+}
+.gm-btn-book:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(201,165,90,.35); }
+/* Lightbox inside modal */
+.gm-lb {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.96);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.gm-lb.open { display: flex; }
+.gm-lb-img { max-width: 90vw; max-height: 85vh; border-radius: 12px; object-fit: contain; box-shadow: 0 20px 60px rgba(0,0,0,.7); }
+.gm-lb-close {
+  position: fixed; top: 18px; right: 22px; width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #fff; cursor: pointer; z-index: 10000;
+}
+.gm-lb-close:hover { background: rgba(220,50,50,.3); }
+.gm-lb-nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: #fff; cursor: pointer; z-index: 10000; transition: all .2s;
+}
+.gm-lb-nav:hover { background: rgba(201,165,90,.3); }
+.gm-lb-prev { left: 14px; }
+.gm-lb-next { right: 14px; }
+@media(max-width:600px){
+  .svc-tile-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .gm-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .gm-card img { height: 150px; }
+  .gm-body { padding: 16px; }
+  .gm-lb-nav { display: none; }
+}
+</style>
+
+<section id="services" class="svc-tile-section">
   <div class="wrap">
     <div class="sec-hd rv">
       <div class="stag">What We Offer</div>
       <h2 class="sh2">Our <em>Services</em></h2>
-      <p class="sdesc">Specialising in Indian Weddings &amp; Events — capturing every tradition, ritual and celebration beautifully.</p>
+      <p class="sdesc">Click any service below to view our photo portfolio — specialising in Indian Weddings &amp; Events.</p>
     </div>
-    <div class="svc-grid">
-      <div class="svc-card featured rv" id="svc1">
-        <div class="svc-badge">⭐ Most Popular</div>
-        <div class="svc-img"><img src="gallery-wedding.png" alt="Indian Wedding Photography" loading="lazy"/></div>
-        <div class="svc-body">
-          <div class="svc-icon">💍</div>
-          <h3>Indian Wedding Photography</h3>
-          <p>Covering every sacred ritual — from the Saat Phere at the mandap to the emotional Vidaai — in breathtaking detail.</p>
-          <ul><li>Full wedding day coverage</li><li>Mandap &amp; pheras photography</li><li>Bride &amp; groom portraits</li><li>Candid family moments</li></ul>
-          <a href="#contact" class="svc-link">Book Now →</a>
+
+    <div class="svc-cat-label">Wedding &amp; Ceremonies</div>
+    <div class="svc-tile-grid">
+      <button class="svc-tile" onclick="openGallery('wedding')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-wedding.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">💍</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Wedding Photographers</div>
+          <div class="svc-tile-cta">View Photos ›</div>
         </div>
-      </div>
-      <div class="svc-card rv" id="svc2">
-        <div class="svc-img"><img src="gallery-event.png" alt="Sangeet &amp; Mehndi" loading="lazy"/></div>
-        <div class="svc-body">
-          <div class="svc-icon">💃</div>
-          <h3>Sangeet &amp; Mehndi</h3>
-          <p>Capturing the fun, music, dance and colours of your Sangeet night and Mehndi ceremony beautifully.</p>
-          <ul><li>Sangeet night coverage</li><li>Mehndi ceremony photos</li><li>Dance &amp; performances</li><li>Group &amp; candid shots</li></ul>
-          <a href="#contact" class="svc-link">Book Now →</a>
+      </button>
+      <button class="svc-tile" onclick="openGallery('prewedding')">
+        <div class="svc-tile-bg" style="background-image:url('svc-prewedding.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">💑</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Pre Wedding Photoshoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
         </div>
-      </div>
-      <div class="svc-card rv" id="svc3">
-        <div class="svc-img"><img src="gallery-baraat.png" alt="Baraat Photography" loading="lazy"/></div>
-        <div class="svc-body">
-          <div class="svc-icon">🐴</div>
-          <h3>Baraat &amp; Reception</h3>
-          <p>From the grand Baraat procession with dhol &amp; band baja to the elegant Reception — every moment covered.</p>
-          <ul><li>Baraat procession photography</li><li>Dhol &amp; dance coverage</li><li>Reception ceremony</li><li>Same-day preview images</li></ul>
-          <a href="#contact" class="svc-link">Book Now →</a>
+      </button>
+      <button class="svc-tile" onclick="openGallery('baraat')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-baraat.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🐴</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Baraat &amp; Reception</div>
+          <div class="svc-tile-cta">View Photos ›</div>
         </div>
-      </div>
-      <div class="svc-card rv" id="svc4">
-        <div class="svc-img"><img src="gallery-drone.png" alt="Drone Photography" loading="lazy"/></div>
-        <div class="svc-body">
-          <div class="svc-icon">🚁</div>
-          <h3>Drone Aerial Photography</h3>
-          <p>Stunning aerial drone shots of your wedding venue, mandap and procession from breathtaking heights.</p>
-          <ul><li>4K aerial drone footage</li><li>Licensed drone pilot</li><li>Venue &amp; mandap aerial shots</li><li>Baraat aerial coverage</li></ul>
-          <a href="#contact" class="svc-link">Book Now →</a>
+      </button>
+      <button class="svc-tile" onclick="openGallery('mehndi')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-mehndi.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🌸</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Mehndi &amp; Haldi</div>
+          <div class="svc-tile-cta">View Photos ›</div>
         </div>
-      </div>
-      <div class="svc-card rv" id="svc5">
-        <div class="svc-img"><img src="gallery-drone2.png" alt="Cinematic Videography" loading="lazy"/></div>
-        <div class="svc-body">
-          <div class="svc-icon">🎥</div>
-          <h3>Cinematic Wedding Film</h3>
-          <p>Bollywood-style cinematic 4K wedding films with background music that you'll treasure for life.</p>
-          <ul><li>4K cinematic production</li><li>Drone aerial footage</li><li>Hindi/Bollywood music edit</li><li>Short film &amp; highlights reel</li></ul>
-          <a href="#contact" class="svc-link">Book Now →</a>
+      </button>
+      <button class="svc-tile" onclick="openGallery('candid')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-wedding2.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">📷</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Candid Wedding Photography</div>
+          <div class="svc-tile-cta">View Photos ›</div>
         </div>
-      </div>
-      <div class="svc-card rv" id="svc6">
-        <div class="svc-img"><img src="gallery-mehndi.png" alt="Haldi &amp; Pre-Wedding" loading="lazy"/></div>
-        <div class="svc-body">
-          <div class="svc-icon">🌸</div>
-          <h3>Haldi &amp; Pre-Wedding Shoot</h3>
-          <p>Fun-filled Haldi ceremony coverage and romantic pre-wedding shoots at heritage locations across India.</p>
-          <ul><li>Haldi ceremony photography</li><li>Pre-wedding couple shoot</li><li>Heritage &amp; palace locations</li><li>Drone pre-wedding shots</li></ul>
-          <a href="#contact" class="svc-link">Book Now →</a>
+      </button>
+      <button class="svc-tile" onclick="openGallery('videographers')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-drone2.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🎬</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Wedding Videographers</div>
+          <div class="svc-tile-cta">View Photos ›</div>
         </div>
-      </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('sangeet')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">💃</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Sangeet Ceremony</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('engagement')">
+        <div class="svc-tile-bg" style="background-image:url('svc-prewedding.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">💎</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Engagement Photoshoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('drone')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-drone.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🚁</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Drone Aerial Photography</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
     </div>
-    <div style="text-align: center; margin-top: 40px;">
-      <a href="services.html" target="_blank" class="btn-gold" style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;">
-        🗂️ View All Services &amp; Photo Galleries
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
+
+    <div class="svc-cat-label">Events &amp; Special Occasions</div>
+    <div class="svc-tile-grid">
+      <button class="svc-tile" onclick="openGallery('events')">
+        <div class="svc-tile-bg" style="background-image:url('svc-event.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🎉</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Event Photographers</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('birthday')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🎂</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Birthday Photoshoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('housewarming')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🏠</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">House Warming Photoshoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('naming')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">👶</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Naming Ceremony</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('upanayanam')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🙏</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Upanayanam Photography</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('family')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-event.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">👨‍👩‍👧‍👦</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Family Photoshoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('corporate')">
+        <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🏢</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Corporate Photographers</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+    </div>
+
+    <div class="svc-cat-label">Portrait &amp; Specialty Photography</div>
+    <div class="svc-tile-grid">
+      <button class="svc-tile" onclick="openGallery('maternity')">
+        <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🤰</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Maternity Photoshoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('newborn')">
+        <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">🍼</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Newborn Photoshoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('portfolio')">
+        <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">👤</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Portfolio Shoot</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('product')">
+        <div class="svc-tile-bg" style="background-image:url('svc-portrait.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">📦</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Product Photography</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
+      <button class="svc-tile" onclick="openGallery('album')">
+        <div class="svc-tile-bg" style="background-image:url('gallery-wedding2.png')"></div>
+        <div class="svc-tile-ov"></div>
+        <div class="svc-tile-ico">📚</div>
+        <div class="svc-tile-body">
+          <div class="svc-tile-name">Album Design &amp; Print</div>
+          <div class="svc-tile-cta">View Photos ›</div>
+        </div>
+      </button>
     </div>
   </div>
 </section>
+
+<!-- ══ GALLERY MODAL ════════════════════════════════════════ -->
+<div class="gm-overlay" id="gmOverlay" role="dialog" aria-modal="true" aria-label="Service Photo Gallery">
+  <div class="gm-header">
+    <div class="gm-header-left">
+      <span class="gm-icon" id="gmIcon">📷</span>
+      <div>
+        <div class="gm-title" id="gmTitle">Gallery</div>
+        <div class="gm-desc" id="gmDesc">MVR Studio Portfolio</div>
+      </div>
+    </div>
+    <button class="gm-close" id="gmClose" title="Close">✕</button>
+  </div>
+  <div class="gm-body">
+    <div class="gm-grid" id="gmGrid"></div>
+    <div class="gm-cta">
+      <h3>Love What You See? <em>Book Us!</em></h3>
+      <p>Contact MVR Studio today and reserve your date.</p>
+      <div class="gm-cta-btns">
+        <a href="https://wa.me/919652341566?text=Hello%20MVR%20Studio!%20I%20saw%20your%20portfolio%20and%20would%20like%20to%20book%20a%20session." target="_blank" class="gm-btn-wa">💬 WhatsApp Us</a>
+        <a href="#contact" class="gm-btn-book" id="gmBookLink">📅 Book a Session</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox inside modal -->
+<div class="gm-lb" id="gmLb">
+  <img class="gm-lb-img" id="gmLbImg" src="" alt=""/>
+  <button class="gm-lb-close" id="gmLbClose">✕</button>
+  <button class="gm-lb-nav gm-lb-prev" id="gmLbPrev">‹</button>
+  <button class="gm-lb-nav gm-lb-next" id="gmLbNext">›</button>
+</div>
 
 <!-- ══ GALLERY ══════════════════════════════════════════ -->
 <section id="gallery" class="gallery-sec">
@@ -771,5 +1096,246 @@
 
 
 <script src="script.js?v=1.3"></script>
+<script>
+/* ── GALLERY MODAL ─────────────────────────── */
+(function(){
+  'use strict';
+  const SERVICES = {
+    wedding:      { icon:'💍', title:'Wedding Photographers', desc:'Full coverage — Mandap, Pheras, Vidaai & Portraits', photos:[
+      {src:'gallery-wedding.png', cap:'Indian Wedding — Mandap Ceremony'},
+      {src:'gallery-wedding2.png', cap:'Bride & Groom Portraits'},
+      {src:'gallery-baraat.png', cap:'Baraat Procession'},
+      {src:'gallery-drone.png', cap:'Aerial Wedding Shot'},
+      {src:'gallery-mehndi.png', cap:'Mehndi Ceremony'},
+      {src:'gallery-event.png', cap:'Sangeet Night'},
+      {src:'svc-wedding.png', cap:'Couple Portrait'},
+      {src:'gallery-drone2.png', cap:'Cinematic Film Still'}
+    ]},
+    prewedding:   { icon:'💑', title:'Pre Wedding Photoshoot', desc:'Romantic couple sessions at heritage & scenic locations', photos:[
+      {src:'svc-prewedding.png', cap:'Pre-Wedding — Heritage Location'},
+      {src:'gallery-wedding2.png', cap:'Romantic Couple Portrait'},
+      {src:'gallery-drone.png', cap:'Aerial Pre-Wedding Shot'},
+      {src:'gallery-mehndi.png', cap:'Bridal Preparation'},
+      {src:'svc-wedding.png', cap:'Couple Photography'},
+      {src:'gallery-drone2.png', cap:'Cinematic Pre-Wedding Film'}
+    ]},
+    baraat:       { icon:'🐴', title:'Baraat & Reception', desc:'Grand procession with dhol & band baja to the elegant Reception', photos:[
+      {src:'gallery-baraat.png', cap:'Baraat Grand Procession'},
+      {src:'gallery-drone.png', cap:'Aerial Baraat Drone Shot'},
+      {src:'gallery-wedding.png', cap:'Reception Ceremony'},
+      {src:'gallery-wedding2.png', cap:'Groom Portrait'},
+      {src:'gallery-event.png', cap:'Celebration Moments'},
+      {src:'gallery-drone2.png', cap:'Cinematic Coverage'}
+    ]},
+    mehndi:       { icon:'🌸', title:'Mehndi & Haldi Ceremony', desc:'Colourful traditions captured beautifully', photos:[
+      {src:'gallery-mehndi.png', cap:'Mehndi Ceremony — Close-up'},
+      {src:'gallery-event.png', cap:'Haldi Ceremony Fun'},
+      {src:'gallery-baraat.png', cap:'Sangeet Dance'},
+      {src:'gallery-wedding.png', cap:'Bride Portraits'},
+      {src:'gallery-wedding2.png', cap:'Family Celebrations'},
+      {src:'svc-event.png', cap:'Candid Moments'}
+    ]},
+    candid:       { icon:'📷', title:'Candid Wedding Photography', desc:'Natural, unposed moments full of genuine emotion', photos:[
+      {src:'gallery-wedding2.png', cap:'Candid Bridal Moment'},
+      {src:'gallery-wedding.png', cap:'Genuine Emotions'},
+      {src:'gallery-event.png', cap:'Family Candid'},
+      {src:'gallery-baraat.png', cap:'Celebration Candid'},
+      {src:'gallery-mehndi.png', cap:'Mehndi Candid'},
+      {src:'svc-wedding.png', cap:'Natural Moments'},
+      {src:'gallery-drone2.png', cap:'Cinematic Capture'},
+      {src:'gallery-drone.png', cap:'Aerial Candid'}
+    ]},
+    videographers:{ icon:'🎬', title:'Wedding Videographers', desc:'Bollywood-style cinematic 4K wedding films', photos:[
+      {src:'gallery-drone2.png', cap:'4K Cinematic Wedding Film'},
+      {src:'gallery-drone.png', cap:'Aerial Drone Footage'},
+      {src:'gallery-wedding.png', cap:'Wedding Film Still'},
+      {src:'gallery-baraat.png', cap:'Baraat Film Coverage'},
+      {src:'gallery-event.png', cap:'Sangeet Film'},
+      {src:'gallery-wedding2.png', cap:'Couple Highlight'}
+    ]},
+    sangeet:      { icon:'💃', title:'Sangeet Ceremony', desc:'Vibrant dance & celebration photography', photos:[
+      {src:'gallery-event.png', cap:'Sangeet Night — Stage Performance'},
+      {src:'svc-event.png', cap:'Dance Celebration'},
+      {src:'gallery-baraat.png', cap:'Family Dance'},
+      {src:'gallery-mehndi.png', cap:'Mehndi Night'},
+      {src:'gallery-wedding2.png', cap:'Couple Dance'},
+      {src:'gallery-drone2.png', cap:'Aerial Stage Shot'}
+    ]},
+    engagement:   { icon:'💎', title:'Engagement Photoshoot', desc:'Capture the joy of your commitment day', photos:[
+      {src:'svc-prewedding.png', cap:'Engagement Ceremony'},
+      {src:'gallery-wedding.png', cap:'Ring Close-up'},
+      {src:'gallery-wedding2.png', cap:'Couple Portrait'},
+      {src:'gallery-mehndi.png', cap:'Celebration Moments'},
+      {src:'gallery-event.png', cap:'Family Gathering'},
+      {src:'svc-wedding.png', cap:'Romantic Shot'}
+    ]},
+    drone:        { icon:'🚁', title:'Drone Aerial Photography', desc:'DGCA-licensed stunning aerial shots from the sky', photos:[
+      {src:'gallery-drone.png', cap:'Aerial Drone Shot'},
+      {src:'gallery-drone2.png', cap:'Cinematic Drone Footage'},
+      {src:'gallery-baraat.png', cap:'Baraat Aerial View'},
+      {src:'gallery-wedding.png', cap:'Wedding Venue Aerial'},
+      {src:'gallery-event.png', cap:'Event Aerial Shot'},
+      {src:'gallery-wedding2.png', cap:'Landscape Drone'}
+    ]},
+    events:       { icon:'🎉', title:'Event Photographers', desc:'Corporate events, grand parties & cultural programs', photos:[
+      {src:'svc-event.png', cap:'Corporate Event'},
+      {src:'gallery-event.png', cap:'Cultural Program'},
+      {src:'gallery-baraat.png', cap:'Grand Celebration'},
+      {src:'gallery-drone2.png', cap:'Aerial Event Shot'},
+      {src:'gallery-wedding2.png', cap:'Award Ceremony'},
+      {src:'gallery-mehndi.png', cap:'Traditional Event'}
+    ]},
+    birthday:     { icon:'🎂', title:'Birthday Photoshoot', desc:'Fun & vibrant birthday celebration photography', photos:[
+      {src:'gallery-event.png', cap:'Birthday Celebration'},
+      {src:'svc-event.png', cap:'Cake Cutting Moment'},
+      {src:'gallery-baraat.png', cap:'Birthday Dance'},
+      {src:'gallery-wedding2.png', cap:'Candid Birthday Shot'},
+      {src:'gallery-mehndi.png', cap:'Decoration Details'},
+      {src:'gallery-drone2.png', cap:'Overhead Celebration'}
+    ]},
+    housewarming: { icon:'🏠', title:'House Warming Photoshoot', desc:'Griha Pravesh pooja & family moments', photos:[
+      {src:'gallery-event.png', cap:'Griha Pravesh Pooja'},
+      {src:'gallery-mehndi.png', cap:'Family Blessings'},
+      {src:'gallery-wedding.png', cap:'New Home Portrait'},
+      {src:'gallery-baraat.png', cap:'Celebration Moments'},
+      {src:'svc-portrait.png', cap:'Family Portrait'},
+      {src:'gallery-wedding2.png', cap:'Candid Happiness'}
+    ]},
+    naming:       { icon:'👶', title:'Naming Ceremony Photography', desc:'Namkaran blessings & first name-giving ritual', photos:[
+      {src:'svc-portrait.png', cap:'Naming Ceremony Ritual'},
+      {src:'gallery-event.png', cap:'Family Blessings'},
+      {src:'gallery-mehndi.png', cap:'Pooja Moments'},
+      {src:'gallery-wedding.png', cap:'Traditional Ceremony'},
+      {src:'gallery-baraat.png', cap:'Celebration Candid'},
+      {src:'gallery-wedding2.png', cap:'Grandparent Moments'}
+    ]},
+    upanayanam:   { icon:'🙏', title:'Upanayanam Photography', desc:'Sacred thread ceremony — every ritual covered', photos:[
+      {src:'gallery-event.png', cap:'Upanayanam Ritual'},
+      {src:'gallery-mehndi.png', cap:'Sacred Thread Ceremony'},
+      {src:'svc-portrait.png', cap:'Boy Portrait'},
+      {src:'gallery-wedding.png', cap:'Family Portrait'},
+      {src:'gallery-baraat.png', cap:'Celebration Moments'},
+      {src:'gallery-wedding2.png', cap:'Candid Blessings'}
+    ]},
+    family:       { icon:'👨‍👩‍👧‍👦', title:'Family Photoshoot', desc:'Warm portraits capturing the bond of your family', photos:[
+      {src:'svc-portrait.png', cap:'Family Portrait'},
+      {src:'gallery-event.png', cap:'Family Celebration'},
+      {src:'gallery-wedding2.png', cap:'Candid Family'},
+      {src:'gallery-mehndi.png', cap:'Traditional Family'},
+      {src:'gallery-baraat.png', cap:'Festival Family Shot'},
+      {src:'gallery-wedding.png', cap:'Formal Family Portrait'}
+    ]},
+    corporate:    { icon:'🏢', title:'Corporate Photographers', desc:'Headshots, office events & brand photography', photos:[
+      {src:'svc-portrait.png', cap:'Corporate Headshot'},
+      {src:'svc-event.png', cap:'Office Event Coverage'},
+      {src:'gallery-event.png', cap:'Conference Photography'},
+      {src:'gallery-drone2.png', cap:'Aerial Corporate'},
+      {src:'gallery-drone.png', cap:'Office Aerial Shot'},
+      {src:'gallery-wedding2.png', cap:'Brand Photography'}
+    ]},
+    maternity:    { icon:'🤰', title:'Maternity Photoshoot', desc:'Celebrating the glow of motherhood', photos:[
+      {src:'svc-portrait.png', cap:'Maternity Portrait'},
+      {src:'gallery-wedding.png', cap:'Couple Maternity Shot'},
+      {src:'gallery-wedding2.png', cap:'Outdoor Maternity'},
+      {src:'svc-prewedding.png', cap:'Garden Maternity'},
+      {src:'gallery-mehndi.png', cap:'Traditional Maternity'},
+      {src:'gallery-drone.png', cap:'Aerial Outdoor Shoot'}
+    ]},
+    newborn:      { icon:'👶', title:'Newborn Photoshoot', desc:'Tiny toes, peaceful sleeps, precious first days', photos:[
+      {src:'svc-portrait.png', cap:'Newborn Portrait'},
+      {src:'gallery-wedding2.png', cap:'Family with Newborn'},
+      {src:'gallery-mehndi.png', cap:'Newborn Details'},
+      {src:'gallery-event.png', cap:'Sleeping Baby'},
+      {src:'gallery-wedding.png', cap:'Parents with Baby'},
+      {src:'gallery-baraat.png', cap:'Newborn Family Portrait'}
+    ]},
+    portfolio:    { icon:'👤', title:'Portfolio Shoot', desc:'Professional portfolios for models, actors & professionals', photos:[
+      {src:'svc-portrait.png', cap:'Model Portfolio'},
+      {src:'gallery-wedding.png', cap:'Fashion Portfolio'},
+      {src:'gallery-wedding2.png', cap:'Studio Portrait'},
+      {src:'svc-prewedding.png', cap:'Outdoor Portfolio'},
+      {src:'gallery-drone.png', cap:'Aerial Creative Shot'},
+      {src:'gallery-event.png', cap:'Lifestyle Portfolio'}
+    ]},
+    product:      { icon:'📦', title:'Product Photography', desc:'E-commerce photography for Amazon, Flipkart & Instagram', photos:[
+      {src:'svc-portrait.png', cap:'Product Studio Shot'},
+      {src:'gallery-event.png', cap:'Product Lifestyle'},
+      {src:'gallery-wedding2.png', cap:'Fashion Product'},
+      {src:'gallery-mehndi.png', cap:'Jewellery Product'},
+      {src:'svc-prewedding.png', cap:'Outdoor Product'},
+      {src:'gallery-drone2.png', cap:'Creative Product'}
+    ]},
+    album:        { icon:'📚', title:'Album Design & Print', desc:'Premium custom wedding albums & photo books', photos:[
+      {src:'gallery-wedding2.png', cap:'Premium Wedding Album'},
+      {src:'gallery-wedding.png', cap:'Photo Book Design'},
+      {src:'gallery-mehndi.png', cap:'Traditional Album'},
+      {src:'gallery-event.png', cap:'Event Photo Book'},
+      {src:'gallery-baraat.png', cap:'Family Album'},
+      {src:'gallery-drone2.png', cap:'Cinematic Album'}
+    ]}
+  };
+
+  let lbPhotos = [], lbIdx = 0;
+
+  window.openGallery = function(key) {
+    const data = SERVICES[key];
+    if (!data) return;
+    document.getElementById('gmIcon').textContent  = data.icon;
+    document.getElementById('gmTitle').textContent = data.title;
+    document.getElementById('gmDesc').textContent  = data.desc;
+    const grid = document.getElementById('gmGrid');
+    grid.innerHTML = '';
+    lbPhotos = data.photos;
+    data.photos.forEach(function(ph, i) {
+      const card = document.createElement('div');
+      card.className = 'gm-card';
+      card.innerHTML = '<img src="'+ph.src+'" alt="'+ph.cap+'" loading="lazy"/>'+
+        '<div class="gm-card-hover"><div class="gm-zoom">⊕</div></div>'+
+        '<div class="gm-card-cap">📷 '+ph.cap+'</div>';
+      card.addEventListener('click', function(){ openLb(i); });
+      grid.appendChild(card);
+    });
+    const overlay = document.getElementById('gmOverlay');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  function closeGallery() {
+    document.getElementById('gmOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('gmClose').addEventListener('click', closeGallery);
+  document.getElementById('gmOverlay').addEventListener('click', function(e){
+    if (e.target === this) closeGallery();
+  });
+  document.getElementById('gmBookLink').addEventListener('click', closeGallery);
+
+  function openLb(i) {
+    lbIdx = i;
+    updateLb();
+    document.getElementById('gmLb').classList.add('open');
+  }
+  function closeLb() { document.getElementById('gmLb').classList.remove('open'); }
+  function updateLb() { document.getElementById('gmLbImg').src = lbPhotos[lbIdx].src; document.getElementById('gmLbImg').alt = lbPhotos[lbIdx].cap; }
+
+  document.getElementById('gmLbClose').addEventListener('click', closeLb);
+  document.getElementById('gmLb').addEventListener('click', function(e){ if(e.target===this) closeLb(); });
+  document.getElementById('gmLbPrev').addEventListener('click', function(){ lbIdx=(lbIdx-1+lbPhotos.length)%lbPhotos.length; updateLb(); });
+  document.getElementById('gmLbNext').addEventListener('click', function(){ lbIdx=(lbIdx+1)%lbPhotos.length; updateLb(); });
+
+  document.addEventListener('keydown', function(e){
+    const lb = document.getElementById('gmLb');
+    const gm = document.getElementById('gmOverlay');
+    if (lb.classList.contains('open')) {
+      if (e.key==='Escape') closeLb();
+      if (e.key==='ArrowLeft') { lbIdx=(lbIdx-1+lbPhotos.length)%lbPhotos.length; updateLb(); }
+      if (e.key==='ArrowRight') { lbIdx=(lbIdx+1)%lbPhotos.length; updateLb(); }
+    } else if (gm.classList.contains('open') && e.key==='Escape') {
+      closeGallery();
+    }
+  });
+})();
+</script>
 </body>
 </html>
