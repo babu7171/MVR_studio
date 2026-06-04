@@ -429,6 +429,7 @@
           <h4 style="font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--gold); margin: 0;">Uploaded Gallery Items</h4>
           <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <button type="button" id="btnClearLocalCache" class="btn-ghost" style="padding: 5px 12px; font-size: 0.78rem; border-radius: var(--r1); border: 1px solid rgba(255,82,82,0.3); color: #ff5252; cursor: pointer; background: transparent; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,82,82,0.08)';" onmouseout="this.style.background='transparent';">🗑 Clear Browser Cache Uploads</button>
+            <button type="button" id="btnDeleteSelected" class="btn-ghost" style="padding: 5px 12px; font-size: 0.78rem; border-radius: var(--r1); border: 1px solid #ff5252; color: #ff5252; cursor: pointer; background: rgba(255,82,82,0.05); transition: all 0.2s ease; display: none;" onmouseover="this.style.background='rgba(255,82,82,0.15)';" onmouseout="this.style.background='rgba(255,82,82,0.05)';">🗑 Delete Selected (<span id="selectedCount">0</span>)</button>
             <div style="display: flex; align-items: center; gap: 8px;">
               <label style="font-size: 0.8rem; color: var(--g3);">Filter preview:</label>
             <select id="adminFilterCategory" style="padding: 5px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r1); color: var(--white); font-size: 0.78rem; outline: none; cursor: pointer;">

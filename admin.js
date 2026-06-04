@@ -308,6 +308,21 @@
     const syncToGithubCheck = document.getElementById('syncToGithub');
     const adminFilterCategorySelect = document.getElementById('adminFilterCategory');
 
+    const btnDeleteSelected = document.getElementById('btnDeleteSelected');
+    const selectedCountSpan = document.getElementById('selectedCount');
+
+    function updateDeleteSelectedButton() {
+      if (!btnDeleteSelected) return;
+      const checkedBoxes = previewContainer.querySelectorAll('.admin-gal-select-checkbox:checked');
+      const count = checkedBoxes.length;
+      if (count > 0) {
+        btnDeleteSelected.style.display = 'inline-block';
+        if (selectedCountSpan) selectedCountSpan.textContent = count;
+      } else {
+        btnDeleteSelected.style.display = 'none';
+      }
+    }
+
     if (!previewContainer) return;
 
     // Render Folder Grid dynamically
@@ -505,6 +520,9 @@
             No uploaded items found under this filter category.
           </div>
         `;
+        if (typeof updateDeleteSelectedButton === 'function') {
+          updateDeleteSelectedButton();
+        }
         return;
       }
 
@@ -520,8 +538,9 @@
         const badgeColor = isSync ? 'var(--gold)' : '#ff5252';
 
         return `
-          <div class="admin-gal-card">
+          <div class="admin-gal-card" style="position: relative;">
             ${mediaHTML}
+            <input type="checkbox" class="admin-gal-select-checkbox" data-index="${originalIndex}" style="position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"/>
             <button onclick="window.deleteGalleryItem(${originalIndex})" class="admin-gal-del" title="Remove Item">✕</button>
             <div class="admin-gal-info" style="display:flex; justify-content:space-between; align-items:center; gap:5px; bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85));">
               <span style="overflow:hidden; text-overflow:ellipsis; max-width: 65%;">${item.cap || 'MVR Work'}</span>
@@ -530,6 +549,10 @@
           </div>
         `;
       }).join('');
+
+      if (typeof updateDeleteSelectedButton === 'function') {
+        updateDeleteSelectedButton();
+      }
     }
 
     // Direct upload of a single file's content to GitHub (no database update)
@@ -668,6 +691,56 @@
       if (!dbPutResp.ok) {
         const errJson = await dbPutResp.json().catch(() => ({}));
         throw new Error(errJson.message || `Failed to update DB after deletion: ${errJson.message}`);
+      }
+    }
+
+    // Batch delete multiple gallery items by index from GitHub
+    async function deleteMultipleGalleryItemsFromGithub(indices) {
+      if (!ghToken || !indices || indices.length === 0) return;
+
+      const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
+      const dbGetResp = await fetch(dbUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (!dbGetResp.ok) return;
+      const dbGetData = await dbGetResp.json();
+      const dbSha = dbGetData.sha;
+      const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
+      const dbContentObj = JSON.parse(decoded);
+      if (!dbContentObj.gallery) dbContentObj.gallery = [];
+
+      // Sort indices in descending order to splice without shifting remaining indices
+      const sortedIndices = [...indices].sort((a, b) => b - a);
+      sortedIndices.forEach(idx => {
+        dbContentObj.gallery.splice(idx, 1);
+      });
+
+      const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
+      const dbUpdateBody = {
+        message: `Batch delete ${indices.length} items from gallery_db.json`,
+        content: updatedDbBase64,
+        branch: 'main',
+        sha: dbSha
+      };
+
+      const dbPutResp = await fetch(dbUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dbUpdateBody)
+      });
+
+      if (!dbPutResp.ok) {
+        const errJson = await dbPutResp.json().catch(() => ({}));
+        throw new Error(errJson.message || `Failed to update DB after batch deletion`);
       }
     }
 
@@ -969,6 +1042,64 @@
             location.reload();
           } catch (e) {
             console.error(e);
+          }
+        }
+      });
+    }
+
+    // Delegation listener for checkboxes inside the gallery preview
+    if (previewContainer) {
+      previewContainer.addEventListener('change', (e) => {
+        if (e.target && e.target.classList.contains('admin-gal-select-checkbox')) {
+          updateDeleteSelectedButton();
+        }
+      });
+    }
+
+    // Click listener for batch delete button
+    if (btnDeleteSelected) {
+      btnDeleteSelected.addEventListener('click', async () => {
+        const checkedBoxes = previewContainer.querySelectorAll('.admin-gal-select-checkbox:checked');
+        const count = checkedBoxes.length;
+        if (count === 0) return;
+
+        const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
+        const targetStr = isSync ? "GitHub repository (Live Site)" : "local browser storage";
+
+        if (confirm(`Are you sure you want to delete the ${count} selected gallery items from ${targetStr}?`)) {
+          const indicesToDelete = [];
+          checkedBoxes.forEach(cb => {
+            const idx = parseInt(cb.dataset.index, 10);
+            if (!isNaN(idx)) {
+              indicesToDelete.push(idx);
+            }
+          });
+
+          try {
+            if (isSync) {
+              if (uploadProg) uploadProg.style.display = 'flex';
+              if (upFill) upFill.style.width = '50%';
+              if (upLabel) upLabel.textContent = `Deleting ${count} items from GitHub...`;
+
+              await deleteMultipleGalleryItemsFromGithub(indicesToDelete);
+              await fetchGithubGallery();
+
+              if (uploadProg) uploadProg.style.display = 'none';
+              if (upFill) upFill.style.width = '0%';
+            } else {
+              const items = getGallery();
+              const sortedIndices = [...indicesToDelete].sort((a, b) => b - a);
+              sortedIndices.forEach(idx => {
+                items.splice(idx, 1);
+              });
+              saveGallery(items);
+            }
+            renderGalleryPreview();
+            alert(`Successfully deleted ${count} items!`);
+          } catch (err) {
+            console.error(err);
+            alert('Delete failed: ' + err.message);
+            if (uploadProg) uploadProg.style.display = 'none';
           }
         }
       });
