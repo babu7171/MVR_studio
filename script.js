@@ -462,18 +462,7 @@
   // Load custom saved items from localStorage (uploaded locally by admin)
   // Load custom saved items from localStorage (local test) + gallery_db.json (GitHub)
   async function loadCustomGallery() {
-    // 1. Load local test uploads
-    try {
-      const items = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
-      items.forEach(item => {
-        if (item.src && item.src.startsWith('data:')) {
-          // Prepend local items
-          galleryItems.unshift({ ...item, isNew: true });
-        }
-      });
-    } catch (err) {
-      console.warn('Failed to load custom gallery from localStorage');
-    }
+
 
     // 2. Fetch live items from gallery_db.json
     try {

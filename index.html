@@ -1168,17 +1168,7 @@
     // Combine static photos with dynamically loaded photos for this category
     let combinedPhotos = [];
 
-    // A. Prepend any local storage mock uploaded photos for this category
-    try {
-      const localItems = JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
-      localItems.forEach(function(item) {
-        if (item.category === key && item.src && item.src.startsWith('data:')) {
-          combinedPhotos.push({ src: item.src, cap: item.cap || 'MVR Work' });
-        }
-      });
-    } catch (e) {
-      console.warn(e);
-    }
+
 
     // B. Prepend any GitHub database live synced uploaded photos for this category
     if (window.customGalleryDb && Array.isArray(window.customGalleryDb)) {
