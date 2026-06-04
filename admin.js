@@ -958,6 +958,21 @@
     } else {
       renderGalleryPreview();
     }
+
+    const btnClearLocalCache = document.getElementById('btnClearLocalCache');
+    if (btnClearLocalCache) {
+      btnClearLocalCache.addEventListener('click', () => {
+        if (confirm("Are you sure you want to clear all local uploads from this browser's cache? (This will NOT affect the live files on GitHub)")) {
+          try {
+            localStorage.removeItem('mvr_gallery');
+            alert('Browser cache uploads cleared successfully!');
+            location.reload();
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      });
+    }
   }
 
   // ── Budgets & Services Editor Tab Logic ──
