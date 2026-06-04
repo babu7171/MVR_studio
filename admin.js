@@ -276,6 +276,76 @@
 
     if (!previewContainer) return;
 
+    // Render Folder Grid dynamically
+    async function renderFolderGrid() {
+      const grid = document.getElementById('adminFoldersGrid');
+      if (!grid) return;
+
+      let services = [];
+      try {
+        const resp = await fetch('gallery_db.json?t=' + Date.now());
+        if (resp.ok) {
+          const data = await resp.json();
+          services = data.services || [];
+        }
+      } catch (err) {
+        console.warn('Could not load services for folders from gallery_db.json, using fallback', err);
+      }
+
+      if (!services || services.length === 0) {
+        services = DEFAULT_SERVICES_FALLBACK;
+      }
+
+      grid.innerHTML = services.map(svc => {
+        return `
+          <div class="admin-folder-card" onclick="window.triggerFolderUpload('${svc.id}')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r1); padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none;" onmouseover="this.style.background='rgba(201,165,90,0.08)'; this.style.borderColor='var(--gold)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.06)';">
+            <span style="font-size: 1.5rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(255,255,255,0.04); border-radius: 8px;">
+              ${svc.icon || '📁'}
+            </span>
+            <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left;">
+              <span style="font-size: 0.82rem; font-weight: 600; color: var(--white); overflow: hidden; text-overflow: ellipsis;">${svc.name}</span>
+              <span style="font-size: 0.68rem; color: var(--gold); font-weight: 500;">Click to upload</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Also update the select dropdown options to stay in sync with the database services list
+      if (uploadCategorySelect) {
+        uploadCategorySelect.innerHTML = services.map(svc => {
+          return `<option value="${svc.id}">${svc.icon} ${svc.name}</option>`;
+        }).join('');
+        uploadCategorySelect.insertAdjacentHTML('afterbegin', '<option value="all">General Gallery (All)</option>');
+        uploadCategorySelect.value = services[0]?.id || 'wedding';
+      }
+
+      if (adminFilterCategorySelect) {
+        adminFilterCategorySelect.innerHTML = services.map(svc => {
+          return `<option value="${svc.id}">${svc.icon} ${svc.name}</option>`;
+        }).join('');
+        adminFilterCategorySelect.insertAdjacentHTML('afterbegin', '<option value="all">Show All Categories</option>');
+        adminFilterCategorySelect.value = 'all';
+      }
+    }
+
+    window.triggerFolderUpload = function(categoryId) {
+      if (uploadCategorySelect) {
+        uploadCategorySelect.value = categoryId;
+        // Visual cue
+        uploadCategorySelect.style.border = '1px solid var(--gold)';
+        uploadCategorySelect.style.boxShadow = '0 0 10px rgba(201,165,90,0.2)';
+        setTimeout(() => {
+          uploadCategorySelect.style.border = '1px solid rgba(255,255,255,0.08)';
+          uploadCategorySelect.style.boxShadow = 'none';
+        }, 1500);
+      }
+      if (fileInput) {
+        fileInput.click();
+      }
+    };
+
+    renderFolderGrid();
+
     let ghToken = localStorage.getItem('mvr_github_token') || '';
     const repoOwner = 'babu7171';
     const repoName = 'MVR_studio';
