@@ -424,9 +424,8 @@
     }
 
     // Direct upload of a single file to GitHub repository contents
-    async function uploadFileToGithub(file, caption, category) {
-      const isVid = file.type.startsWith('video/');
-      const fileType = isVid ? 'video' : 'photo';
+    async function uploadFileToGithub(file, caption, category, detectedType, fileExt) {
+      const fileType = detectedType || (file.type.startsWith('video/') ? 'video' : 'photo');
 
       const base64Data = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -439,7 +438,10 @@
       });
 
       const timestamp = Math.floor(Date.now() / 1000);
-      const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      let cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      if (fileExt && !cleanName.toLowerCase().endsWith(fileExt.toLowerCase())) {
+        cleanName += fileExt;
+      }
       const filename = `${timestamp}-${cleanName}`;
       const repoFilePath = `uploads/${filename}`;
 
@@ -647,36 +649,126 @@
       });
     }
 
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif',
-                           'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
+    function detectFileDetails(file) {
+      return new Promise((resolve) => {
+        // If type is already recognized by the browser, use it
+        if (file.type && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+          let ext = '';
+          const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
+          if (match) {
+            ext = '.' + match[1].toLowerCase();
+          } else {
+            if (file.type.includes('png')) ext = '.png';
+            else if (file.type.includes('webp')) ext = '.webp';
+            else if (file.type.includes('gif')) ext = '.gif';
+            else if (file.type.includes('mp4')) ext = '.mp4';
+            else if (file.type.includes('quicktime')) ext = '.mov';
+            else ext = '.jpg';
+          }
+          resolve({
+            file: file,
+            mime: file.type,
+            type: file.type.startsWith('video/') ? 'video' : 'photo',
+            ext: ext,
+            isValid: true
+          });
+          return;
+        }
+
+        // Check if filename has a known media extension
+        const knownExtensions = {
+          'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp', 'gif': 'image/gif',
+          'mp4': 'video/mp4', 'mov': 'video/quicktime', 'mkv': 'video/x-matroska', 'avi': 'video/x-msvideo'
+        };
+        const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
+        if (match) {
+          const extStr = match[1].toLowerCase();
+          if (knownExtensions[extStr]) {
+            const mime = knownExtensions[extStr];
+            resolve({
+              file: file,
+              mime: mime,
+              type: mime.startsWith('video/') ? 'video' : 'photo',
+              ext: '.' + extStr,
+              isValid: true
+            });
+            return;
+          }
+        }
+
+        // For extensionless or unrecognized files, read magic bytes
+        const blob = file.slice(0, 16);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (!e.target || !e.target.result) {
+            resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
+            return;
+          }
+          const arr = new Uint8Array(e.target.result);
+          let header = '';
+          for (let i = 0; i < Math.min(arr.length, 12); i++) {
+            header += arr[i].toString(16).padStart(2, '0').toUpperCase();
+          }
+
+          if (header.startsWith('89504E47')) {
+            resolve({ file: file, mime: 'image/png', type: 'photo', ext: '.png', isValid: true });
+          } else if (header.startsWith('FFD8FF')) {
+            resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
+          } else if (header.startsWith('47494638')) {
+            resolve({ file: file, mime: 'image/gif', type: 'photo', ext: '.gif', isValid: true });
+          } else if (header.startsWith('52494646') && header.slice(16, 24) === '57454250') {
+            resolve({ file: file, mime: 'image/webp', type: 'photo', ext: '.webp', isValid: true });
+          } else if (header.slice(8, 16) === '66747970') {
+            resolve({ file: file, mime: 'video/mp4', type: 'video', ext: '.mp4', isValid: true });
+          } else {
+            resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
+          }
+        };
+        reader.onerror = () => {
+          resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
+        };
+        reader.readAsArrayBuffer(blob);
+      });
+    }
 
     async function handleUploadFiles(files) {
       if (!files || !files.length) return;
-      const valid = Array.from(files).filter(f => ALLOWED_TYPES.includes(f.type) || f.type.startsWith('image/') || f.type.startsWith('video/'));
-      if (!valid.length) {
+
+      if (uploadProg) uploadProg.style.display = 'flex';
+      if (upLabel) upLabel.textContent = 'Analyzing files...';
+
+      const analyzedFiles = [];
+      for (const file of Array.from(files)) {
+        const details = await detectFileDetails(file);
+        if (details.isValid) {
+          analyzedFiles.push(details);
+        }
+      }
+
+      if (!analyzedFiles.length) {
         alert('Please upload valid image files (JPG, PNG, WEBP, GIF) or video files (MP4, MOV).');
+        if (uploadProg) uploadProg.style.display = 'none';
         return;
       }
 
-      if (uploadProg) uploadProg.style.display = 'flex';
       let done = 0;
-
       const customCaption = uploadCaptionInput ? uploadCaptionInput.value.trim() : '';
       const customCategory = uploadCategorySelect ? uploadCategorySelect.value : 'all';
       const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
 
       if (isSync) {
-        for (const file of valid) {
+        for (const item of analyzedFiles) {
           try {
+            const file = item.file;
             const caption = customCaption || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-            await uploadFileToGithub(file, caption, customCategory);
+            await uploadFileToGithub(file, caption, customCategory, item.type, item.ext);
             done++;
-            const pct = Math.round((done / valid.length) * 100);
+            const pct = Math.round((done / analyzedFiles.length) * 100);
             if (upFill) upFill.style.width = pct + '%';
-            if (upLabel) upLabel.textContent = `Completed ${done} / ${valid.length}`;
+            if (upLabel) upLabel.textContent = `Completed ${done} / ${analyzedFiles.length}`;
           } catch (err) {
-            console.error('GitHub Upload Error for file ' + file.name, err);
-            alert(`Failed to upload ${file.name} to GitHub: ${err.message}`);
+            console.error('GitHub Upload Error for file ' + item.file.name, err);
+            alert(`Failed to upload ${item.file.name} to GitHub: ${err.message}`);
           }
         }
 
@@ -691,20 +783,20 @@
         if (uploadCaptionInput) uploadCaptionInput.value = '';
       } else {
         const items = getGallery();
-        valid.forEach(file => {
+        analyzedFiles.forEach(item => {
+          const file = item.file;
           const reader = new FileReader();
           reader.onload = (ev) => {
             const url = ev.target.result;
-            const isVid = file.type.startsWith('video/');
             const caption = customCaption || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-            items.unshift({ src: url, type: isVid ? 'video' : 'photo', cap: caption, category: customCategory, isNew: true });
+            items.unshift({ src: url, type: item.type, cap: caption, category: customCategory, isNew: true });
             done++;
 
-            const pct = Math.round((done / valid.length) * 100);
+            const pct = Math.round((done / analyzedFiles.length) * 100);
             if (upFill) upFill.style.width = pct + '%';
-            if (upLabel) upLabel.textContent = `Processing ${done} / ${valid.length}`;
+            if (upLabel) upLabel.textContent = `Processing ${done} / ${analyzedFiles.length}`;
 
-            if (done === valid.length) {
+            if (done === analyzedFiles.length) {
               saveGallery(items);
               setTimeout(() => {
                 if (uploadProg) uploadProg.style.display = 'none';
