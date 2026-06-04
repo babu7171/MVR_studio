@@ -12,8 +12,6 @@
   let isAuthenticated = sessionStorage.getItem('mvr_admin_auth') === 'true';
   let authToken = sessionStorage.getItem('mvr_admin_auth_token') || '';
 
-  updateUIForAuth();
-
   function updateUIForAuth() {
     if (isAuthenticated && authToken === 'static-token-123') {
       if (loginSection) loginSection.style.display = 'none';
@@ -1050,5 +1048,7 @@
  
     loadBudgets();
   }
- 
+
+  updateUIForAuth();
+
 })();
