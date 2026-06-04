@@ -477,7 +477,7 @@
 
     // 2. Fetch live items from gallery_db.json
     try {
-      const dbResp = await fetch('gallery_db.json?t=' + Date.now());
+      const dbResp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
       if (dbResp.ok) {
         const data = await dbResp.json();
         if (data) {
@@ -541,6 +541,13 @@
     buildLbList();
   }
 
+  function resolveMediaSrc(src) {
+    if (src && src.startsWith('uploads/')) {
+      return 'https://raw.githubusercontent.com/babu7171/MVR_studio/main/' + src;
+    }
+    return src;
+  }
+
   function makeCard(item) {
     const div = document.createElement('div');
     div.className = 'gal-item ' + item.type;
@@ -548,9 +555,10 @@
     div.dataset.src  = item.src;
     div.dataset.cap  = item.cap;
 
+    const resolvedSrc = resolveMediaSrc(item.src);
     const mediaHTML = item.type === 'video'
-      ? `<video src="${item.src}" muted playsinline preload="metadata"></video>`
-      : `<img src="${item.src}" alt="${item.cap}" loading="lazy"/>`;
+      ? `<video src="${resolvedSrc}" muted playsinline preload="metadata"></video>`
+      : `<img src="${resolvedSrc}" alt="${item.cap}" loading="lazy"/>`;
 
     div.innerHTML = `
       ${mediaHTML}
@@ -631,9 +639,10 @@
   function renderLb() {
     const item = lbList[lbIdx];
     if (!item || !lboxMedia) return;
+    const resolvedSrc = resolveMediaSrc(item.src);
     lboxMedia.innerHTML = item.type === 'video'
-      ? `<video src="${item.src}" controls autoplay style="max-width:90vw;max-height:85vh;border-radius:14px;"></video>`
-      : `<img src="${item.src}" alt="${item.cap}"/>`;
+      ? `<video src="${resolvedSrc}" controls autoplay style="max-width:90vw;max-height:85vh;border-radius:14px;"></video>`
+      : `<img src="${resolvedSrc}" alt="${item.cap}"/>`;
     if (lboxCap) lboxCap.textContent = item.cap;
   }
 

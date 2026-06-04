@@ -450,6 +450,13 @@
       }
     }
 
+    function resolveMediaSrc(src) {
+      if (src && src.startsWith('uploads/')) {
+        return 'https://raw.githubusercontent.com/babu7171/MVR_studio/main/' + src;
+      }
+      return src;
+    }
+
     function renderGalleryPreview() {
       const fullList = ghToken && syncToGithubCheck && syncToGithubCheck.checked ? githubItems : getGallery();
       let displayItems = [...fullList];
@@ -470,9 +477,10 @@
 
       previewContainer.innerHTML = displayItems.map((item) => {
         const originalIndex = fullList.findIndex(x => x.src === item.src);
+        const resolvedSrc = resolveMediaSrc(item.src);
         const mediaHTML = item.type === 'video'
-          ? `<video src="${item.src}" muted playsinline preload="metadata"></video>`
-          : `<img src="${item.src}" alt="${item.cap || ''}"/>`;
+          ? `<video src="${resolvedSrc}" muted playsinline preload="metadata"></video>`
+          : `<img src="${resolvedSrc}" alt="${item.cap || ''}"/>`;
 
         const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
         const badgeText = isSync ? 'Live Sync' : 'Local';
@@ -985,7 +993,7 @@
  
     async function loadBudgets() {
       try {
-        const resp = await fetch('gallery_db.json?t=' + Date.now());
+        const resp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
         if (resp.ok) {
           const data = await resp.json();
           currentServices = data.services || [];

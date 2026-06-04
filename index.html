@@ -1212,6 +1212,13 @@
 
   let lbPhotos = [], lbIdx = 0;
 
+  function resolveMediaSrc(src) {
+    if (src && src.startsWith('uploads/')) {
+      return 'https://raw.githubusercontent.com/babu7171/MVR_studio/main/' + src;
+    }
+    return src;
+  }
+
   window.initDynamicServices = function(servicesList) {
     if (!servicesList || !Array.isArray(servicesList)) return;
 
@@ -1341,7 +1348,7 @@
     combinedPhotos.forEach(function(ph, i) {
       const card = document.createElement('div');
       card.className = 'gm-card';
-      card.innerHTML = '<img src="'+ph.src+'" alt="'+ph.cap+'" loading="lazy"/>'+
+      card.innerHTML = '<img src="'+resolveMediaSrc(ph.src)+'" alt="'+ph.cap+'" loading="lazy"/>'+
         '<div class="gm-card-hover"><div class="gm-zoom">⊕</div></div>'+
         '<div class="gm-card-cap">📷 '+ph.cap+'</div>';
       card.addEventListener('click', function(){ openLb(i); });
@@ -1390,7 +1397,7 @@
     document.getElementById('gmLb').classList.add('open');
   }
   function closeLb() { document.getElementById('gmLb').classList.remove('open'); }
-  function updateLb() { document.getElementById('gmLbImg').src = lbPhotos[lbIdx].src; document.getElementById('gmLbImg').alt = lbPhotos[lbIdx].cap; }
+  function updateLb() { document.getElementById('gmLbImg').src = resolveMediaSrc(lbPhotos[lbIdx].src); document.getElementById('gmLbImg').alt = lbPhotos[lbIdx].cap; }
 
   document.getElementById('gmLbClose').addEventListener('click', closeLb);
   document.getElementById('gmLb').addEventListener('click', function(e){ if(e.target===this) closeLb(); });
