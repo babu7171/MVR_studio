@@ -3,6 +3,24 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script>
+    window.addEventListener('error', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.className = 'global-error-banner';
+      errDiv.style.background = '#ff5252';
+      errDiv.style.color = '#fff';
+      errDiv.style.padding = '15px';
+      errDiv.style.position = 'fixed';
+      errDiv.style.top = '0';
+      errDiv.style.left = '0';
+      errDiv.style.right = '0';
+      errDiv.style.zIndex = '99999';
+      errDiv.style.fontWeight = 'bold';
+      errDiv.style.textAlign = 'center';
+      errDiv.textContent = '❌ JS Error: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')';
+      document.body.appendChild(errDiv);
+    });
+  </script>
   <title>MVR Studio | Professional Photography &amp; Videography</title>
   <meta name="description" content="MVR Studio – Award-winning professional photography and videography for weddings, events, portraits and commercial projects. Book your session today."/>
   <meta name="keywords" content="MVR Studio, photography, wedding photographer, event photographer, portrait photography, videography"/>
