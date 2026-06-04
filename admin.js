@@ -7,6 +7,40 @@
   const loginError = document.getElementById('loginError');
   const btnLogout = document.getElementById('btnLogout');
   const clearAllBtn = document.getElementById('btnClearAll');
+  
+  const repoOwner = 'babu7171';
+  const repoName = 'MVR_studio';
+
+  // Helper to fetch the latest gallery_db.json with cache bypass (real-time GitHub API)
+  async function fetchDbContent() {
+    const token = localStorage.getItem('mvr_github_token') || '';
+    try {
+      if (token) {
+        const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json?t=` + Date.now();
+        const resp = await fetch(dbUrl, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3.raw'
+          }
+        });
+        if (resp.ok) {
+          return await resp.json();
+        }
+      }
+    } catch (err) {
+      console.warn('Authenticated DB fetch failed, falling back to public CDN', err);
+    }
+
+    try {
+      const resp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
+      if (resp.ok) {
+        return await resp.json();
+      }
+    } catch (err) {
+      console.warn('Could not fetch public gallery_db.json', err);
+    }
+    return null;
+  }
 
   // Check auth status from sessionStorage
   let isAuthenticated = sessionStorage.getItem('mvr_admin_auth') === 'true';
@@ -283,9 +317,8 @@
 
       let services = [];
       try {
-        const resp = await fetch('gallery_db.json?t=' + Date.now());
-        if (resp.ok) {
-          const data = await resp.json();
+        const data = await fetchDbContent();
+        if (data) {
           services = data.services || [];
         }
       } catch (err) {
@@ -499,10 +532,8 @@
       }).join('');
     }
 
-    // Direct upload of a single file to GitHub repository contents
-    async function uploadFileToGithub(file, caption, category, detectedType, fileExt) {
-      const fileType = detectedType || (file.type.startsWith('video/') ? 'video' : 'photo');
-
+    // Direct upload of a single file's content to GitHub (no database update)
+    async function uploadFileContentToGithub(file, repoFilePath, fileType, caption) {
       const base64Data = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -512,16 +543,6 @@
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-
-      const timestamp = Math.floor(Date.now() / 1000);
-      let cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      if (fileExt && !cleanName.toLowerCase().endsWith(fileExt.toLowerCase())) {
-        cleanName += fileExt;
-      }
-      const filename = `${timestamp}-${cleanName}`;
-      const repoFilePath = `uploads/${filename}`;
-
-      if (upLabel) upLabel.textContent = `Uploading ${file.name} to GitHub...`;
 
       const fileUploadUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${repoFilePath}`;
       const fileUploadBody = {
@@ -544,9 +565,11 @@
         const errJson = await fileResp.json().catch(() => ({}));
         throw new Error(errJson.message || `File upload failed with status ${fileResp.status}`);
       }
+    }
 
-      // Update gallery_db.json
-      if (upLabel) upLabel.textContent = `Updating database (gallery_db.json)...`;
+    // Batch update gallery_db.json with multiple new items in a single commit
+    async function updateGalleryDbWithNewItems(newItems) {
+      if (!newItems || newItems.length === 0) return;
 
       const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
       let dbSha = '';
@@ -572,18 +595,15 @@
         }
       }
 
-      dbContentObj.gallery.unshift({
-        src: repoFilePath,
-        type: fileType,
-        cap: caption,
-        category: category,
-        uploadedAt: new Date().toISOString().split('T')[0]
+      // Prepend all new items to the gallery array
+      newItems.forEach(item => {
+        dbContentObj.gallery.unshift(item);
       });
 
       const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
 
       const dbUpdateBody = {
-        message: `Update gallery_db.json for ${caption}`,
+        message: `Update gallery_db.json with ${newItems.length} new items`,
         content: updatedDbBase64,
         branch: 'main'
       };
@@ -833,18 +853,54 @@
       const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
 
       if (isSync) {
+        const newItemsToRegister = [];
         for (const item of analyzedFiles) {
           try {
             const file = item.file;
             const caption = customCaption || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-            await uploadFileToGithub(file, caption, customCategory, item.type, item.ext);
+            
+            const timestamp = Math.floor(Date.now() / 1000);
+            let cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileExt = item.ext;
+            if (fileExt && !cleanName.toLowerCase().endsWith(fileExt.toLowerCase())) {
+              cleanName += fileExt;
+            }
+            const filename = `${timestamp}-${cleanName}`;
+            const repoFilePath = `uploads/${filename}`;
+
+            if (upLabel) upLabel.textContent = `Uploading ${file.name} to GitHub...`;
+            
+            // Upload only file content first
+            await uploadFileContentToGithub(file, repoFilePath, item.type, caption);
+
+            // Register metadata
+            newItemsToRegister.push({
+              src: repoFilePath,
+              type: item.type,
+              cap: caption,
+              category: customCategory,
+              uploadedAt: new Date().toISOString().split('T')[0]
+            });
+
             done++;
-            const pct = Math.round((done / analyzedFiles.length) * 100);
+            const pct = Math.round((done / analyzedFiles.length) * 90); // 90% for file uploads
             if (upFill) upFill.style.width = pct + '%';
-            if (upLabel) upLabel.textContent = `Completed ${done} / ${analyzedFiles.length}`;
+            if (upLabel) upLabel.textContent = `Uploaded ${done} / ${analyzedFiles.length} files`;
           } catch (err) {
             console.error('GitHub Upload Error for file ' + item.file.name, err);
             alert(`Failed to upload ${item.file.name} to GitHub: ${err.message}`);
+          }
+        }
+
+        if (newItemsToRegister.length > 0) {
+          try {
+            if (upLabel) upLabel.textContent = `Saving database settings (gallery_db.json)...`;
+            await updateGalleryDbWithNewItems(newItemsToRegister);
+            if (upFill) upFill.style.width = '100%';
+            if (upLabel) upLabel.textContent = `All uploads completed and saved successfully!`;
+          } catch (err) {
+            console.error('GitHub DB Update Error', err);
+            alert(`Failed to update database on GitHub: ${err.message}`);
           }
         }
 
@@ -853,7 +909,7 @@
         setTimeout(() => {
           if (uploadProg) uploadProg.style.display = 'none';
           if (upFill) upFill.style.width = '0%';
-        }, 1200);
+        }, 1500);
 
         renderGalleryPreview();
         if (uploadCaptionInput) uploadCaptionInput.value = '';
@@ -993,9 +1049,8 @@
  
     async function loadBudgets() {
       try {
-        const resp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
-        if (resp.ok) {
-          const data = await resp.json();
+        const data = await fetchDbContent();
+        if (data) {
           currentServices = data.services || [];
         }
       } catch (err) {

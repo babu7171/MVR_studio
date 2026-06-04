@@ -477,7 +477,24 @@
 
     // 2. Fetch live items from gallery_db.json
     try {
-      const dbResp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
+      const token = localStorage.getItem('mvr_github_token') || '';
+      let dbResp;
+      if (token) {
+        try {
+          dbResp = await fetch('https://api.github.com/repos/babu7171/MVR_studio/contents/gallery_db.json?t=' + Date.now(), {
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3.raw'
+            }
+          });
+        } catch (e) {
+          console.warn('Authenticated API fetch failed, falling back to public CDN', e);
+        }
+      }
+      if (!dbResp || !dbResp.ok) {
+        dbResp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
+      }
+
       if (dbResp.ok) {
         const data = await dbResp.json();
         if (data) {
