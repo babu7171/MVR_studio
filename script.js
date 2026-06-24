@@ -756,8 +756,10 @@
       saveEnquiry(enquiry);
       try { localStorage.setItem('hide_booking_status', 'false'); } catch (e) {}
 
-      // ── Automatically generate and download PDF Quotation ──
-      generateQuotationPDF(enquiry);
+      // ── Ask user if they want to download the PDF Quotation ──
+      if (confirm('Would you like to download your official MVR Studio Quotation PDF?')) {
+        generateQuotationPDF(enquiry);
+      }
 
       // ── Show success alert ──
       if (formOk) {
