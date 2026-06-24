@@ -744,12 +744,6 @@
     budgetsForm.addEventListener('submit', async e => {
       e.preventDefault();
        
-      const token = localStorage.getItem('mvr_github_token') || '';
-      if (!token) {
-        alert('Please connect your GitHub account under the "Portfolio Gallery" tab first to save changes to the live site!');
-        return;
-      }
-       
       const updatedServices = [];
       const cards = container.querySelectorAll('.admin-service-edit-card');
       cards.forEach(card => {
@@ -761,10 +755,6 @@
         const desc = card.querySelector('.svc-edit-desc').value.trim();
         const budget = card.querySelector('.svc-edit-budget').value;
         
-        // Find existing service item to preserve its default photos array
-        const existingSvc = currentServices.find(s => s.id === id) || {};
-        const photos = existingSvc.photos || [];
-        
         updatedServices.push({
           id: id,
           icon: icon,
@@ -772,8 +762,7 @@
           desc: desc,
           group: group,
           budget: budget,
-          bg: bg,
-          photos: photos
+          bg: bg
         });
       });
        
@@ -781,63 +770,23 @@
         const btnSave = document.getElementById('btnSaveBudgets');
         if (btnSave) {
           btnSave.disabled = true;
-          btnSave.textContent = 'Saving to GitHub...';
+          btnSave.textContent = 'Saving...';
         }
          
-        const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
-        const dbGetResp = await fetch(dbUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-         
-        if (!dbGetResp.ok) {
-          const errJson = await dbGetResp.json().catch(() => ({}));
-          throw new Error(errJson.message || `Failed to fetch database file from GitHub.`);
-        }
-         
-        const dbGetData = await dbGetResp.json();
-        const dbSha = dbGetData.sha;
-        const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
-        const dbContentObj = JSON.parse(decoded);
-         
-        // Update the services field
-        dbContentObj.services = updatedServices;
-        
-        // Also keep updated budgets mapping for backwards compatibility
-        dbContentObj.budgets = {};
-        updatedServices.forEach(s => {
-          dbContentObj.budgets[s.name] = s.budget;
-        });
-         
-        const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
-        const dbUpdateBody = {
-          message: `Update services list & budgets via Admin panel`,
-          content: updatedDbBase64,
-          branch: 'main',
-          sha: dbSha
-        };
-         
-        const dbPutResp = await fetch(dbUrl, {
+        const resp = await fetch('/api/services', {
           method: 'PUT',
           headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + jwtToken
           },
-          body: JSON.stringify(dbUpdateBody)
+          body: JSON.stringify({ services: updatedServices })
         });
+        
+        const result = await resp.json();
+        if (!resp.ok) throw new Error(result.error || 'Failed to save services');
          
-        if (!dbPutResp.ok) {
-          const errJson = await dbPutResp.json().catch(() => ({}));
-          throw new Error(errJson.message || `Failed to write database file to GitHub.`);
-        }
-         
-        alert('Service settings saved successfully to GitHub! The changes will be live on the homepage in a few minutes.');
+        alert('Service settings and budgets saved successfully to server!');
         currentServices = updatedServices;
-         
       } catch (err) {
         console.error(err);
         alert('Failed to save services: ' + err.message);
@@ -845,14 +794,14 @@
         const btnSave = document.getElementById('btnSaveBudgets');
         if (btnSave) {
           btnSave.disabled = false;
-          btnSave.textContent = 'Save Budget Ranges';
+          btnSave.textContent = 'Save Services & Budgets';
         }
       }
     });
  
     if (btnReset) {
       btnReset.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset all service settings to their default values? (Note: you must click Save to write the changes to GitHub).')) {
+        if (confirm('Are you sure you want to reset all service settings to their default values? (Note: you must click Save to write the changes to the server).')) {
           renderServicesInputs(DEFAULT_SERVICES_FALLBACK);
         }
       });
