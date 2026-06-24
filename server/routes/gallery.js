@@ -29,9 +29,15 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Use memoryStorage so we always have access to file buffers
+// Ensure temporary uploads directory exists
+const TEMP_DIR = path.join(__dirname, '..', 'temp_uploads');
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+}
+
+// Multer config: save files temporarily to disk (prevents Out of Memory crashes on low RAM servers)
 const upload = multer({
-  storage: multer.memoryStorage(),
+  dest: TEMP_DIR,
   fileFilter,
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
@@ -197,26 +203,37 @@ router.post('/', requireAuth, upload.array('files', 20), async (req, res) => {
       const cat = category || 'wedding';
       
       let src;
-      if (hasDrive) {
-        // Look up human-readable service name for subfolder name mapping
-        let subfolderName = null;
-        try {
-          const categoryRow = db.prepare('SELECT name FROM services WHERE id = ?').get(cat);
-          if (categoryRow) {
-            subfolderName = categoryRow.name;
+      try {
+        if (hasDrive) {
+          // Look up human-readable service name for subfolder name mapping
+          let subfolderName = null;
+          try {
+            const categoryRow = db.prepare('SELECT name FROM services WHERE id = ?').get(cat);
+            if (categoryRow) {
+              subfolderName = categoryRow.name;
+            }
+          } catch (dbErr) {
+            console.warn('Could not query service name for category:', cat, dbErr.message);
           }
-        } catch (dbErr) {
-          console.warn('Could not query service name for category:', cat, dbErr.message);
-        }
 
-        // Upload directly to Google Drive (with subfolder mapping)
-        const uploadResult = await uploadFileToDrive(file.buffer, fileName, file.mimetype, subfolderName);
-        src = uploadResult.url;
-      } else {
-        // Fallback: save to local server disk
-        const filePath = path.join(UPLOADS_DIR, fileName);
-        fs.writeFileSync(filePath, file.buffer);
-        src = `uploads/${fileName}`;
+          // Upload directly to Google Drive (with subfolder mapping)
+          const uploadResult = await uploadFileToDrive(file.path, fileName, file.mimetype, subfolderName);
+          src = uploadResult.url;
+        } else {
+          // Fallback: move from temp to permanent uploads folder
+          const destPath = path.join(UPLOADS_DIR, fileName);
+          fs.renameSync(file.path, destPath);
+          src = `uploads/${fileName}`;
+        }
+      } finally {
+        // Always clean up the temporary file from disk
+        if (fs.existsSync(file.path)) {
+          try {
+            fs.unlinkSync(file.path);
+          } catch (unlinkErr) {
+            console.warn('Failed to delete temporary file:', file.path, unlinkErr.message);
+          }
+        }
       }
 
       const type = isVideo ? 'video' : 'photo';

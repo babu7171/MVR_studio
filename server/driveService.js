@@ -108,14 +108,14 @@ async function getOrCreateSubfolder(parentFolderId, folderName) {
 }
 
 /**
- * Upload a file buffer directly to Google Drive (with optional subfolder mapping)
- * @param {Buffer} fileBuffer — The file data buffer
+ * Upload a file from disk directly to Google Drive (with optional subfolder mapping)
+ * @param {string} filePath — The absolute path to the file on disk
  * @param {string} fileName — The destination filename
  * @param {string} mimeType — File mime type (e.g. image/jpeg)
  * @param {string} [subfolderName] — Optional subfolder name to organize media
  * @returns {Promise<{fileId: string, url: string}>}
  */
-async function uploadFileToDrive(fileBuffer, fileName, mimeType, subfolderName = null) {
+async function uploadFileToDrive(filePath, fileName, mimeType, subfolderName = null) {
   const drive = getDriveClient();
   let folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
@@ -127,17 +127,15 @@ async function uploadFileToDrive(fileBuffer, fileName, mimeType, subfolderName =
     }
   }
 
-  const bufferStream = new stream.PassThrough();
-  bufferStream.end(fileBuffer);
+  const fs = require('fs');
+  const media = {
+    mimeType: mimeType,
+    body: fs.createReadStream(filePath)
+  };
 
   const fileMetadata = {
     name: fileName,
     parents: folderId ? [folderId] : []
-  };
-
-  const media = {
-    mimeType: mimeType,
-    body: bufferStream
   };
 
   // 1. Upload the file to Google Drive
