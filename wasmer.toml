@@ -1,0 +1,16 @@
+[package]
+name = "babu7171/mvr_studio"
+version = "0.1.0"
+description = "MVR Studio Static Frontend"
+
+[dependencies]
+"wasmer/static-web-server" = "1"
+
+[fs]
+"/public" = "."
+
+[[command]]
+name = "webserver"
+module = "wasmer/static-web-server:webserver"
+runner = "https://webc.org/runner/wasi"
+args = ["--port", "$PORT", "--root", "/public"]

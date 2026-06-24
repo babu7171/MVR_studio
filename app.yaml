@@ -1,0 +1,4 @@
+kind: wasmer.io/App.v0
+owner: babu7171
+name: mvr_studio
+package: .
