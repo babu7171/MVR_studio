@@ -1,0 +1,5 @@
+# Exclude server code, SQLite db, and uploads from Wasmer static deployment
+server/
+.git/
+.gitignore
+.env
