@@ -37,6 +37,87 @@ const upload = multer({
 });
 
 /**
+ * GET /api/gallery/debug
+ * Secure diagnostic endpoint for Google Drive credentials & access check
+ */
+router.get('/debug', requireAuth, async (req, res) => {
+  try {
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    const credentialsJson = process.env.GOOGLE_DRIVE_CREDENTIALS;
+
+    if (!credentialsJson) {
+      return res.json({
+        success: false,
+        error: 'GOOGLE_DRIVE_CREDENTIALS environment variable is missing.'
+      });
+    }
+
+    let credentials;
+    try {
+      credentials = JSON.parse(credentialsJson);
+    } catch (parseErr) {
+      return res.json({
+        success: false,
+        error: `Failed to parse GOOGLE_DRIVE_CREDENTIALS JSON: ${parseErr.message}`
+      });
+    }
+
+    const clientEmail = credentials.client_email;
+    if (!clientEmail) {
+      return res.json({
+        success: false,
+        error: 'client_email is missing from GOOGLE_DRIVE_CREDENTIALS JSON.'
+      });
+    }
+
+    if (!folderId) {
+      return res.json({
+        success: false,
+        clientEmail,
+        error: 'GOOGLE_DRIVE_FOLDER_ID environment variable is missing.'
+      });
+    }
+
+    try {
+      const { google } = require('googleapis');
+      const privateKey = credentials.private_key
+        ? credentials.private_key.replace(/\\n/g, '\n')
+        : null;
+
+      const auth = new google.auth.JWT({
+        email: clientEmail,
+        key: privateKey,
+        scopes: ['https://www.googleapis.com/auth/drive']
+      });
+
+      const drive = google.drive({ version: 'v3', auth });
+
+      const folderMetadata = await drive.files.get({
+        fileId: folderId,
+        fields: 'id, name, capabilities'
+      });
+
+      return res.json({
+        success: true,
+        clientEmail,
+        folderId,
+        folderName: folderMetadata.data.name,
+        capabilities: folderMetadata.data.capabilities
+      });
+    } catch (driveErr) {
+      return res.json({
+        success: false,
+        clientEmail,
+        folderId,
+        error: `Google Drive API error: ${driveErr.message}`
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/gallery
  * Returns all gallery items (public)
  * Optional query: ?category=wedding

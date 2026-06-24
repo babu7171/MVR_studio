@@ -401,18 +401,98 @@
 
     renderFolderGrid();
 
-    // ── Backend connection status badge ──
-    if (ghStatusBadge) {
-      ghStatusBadge.textContent = '✅ Connected to Backend Server';
-      ghStatusBadge.style.background = 'rgba(201, 165, 90, 0.1)';
-      ghStatusBadge.style.borderColor = 'var(--gold)';
-      ghStatusBadge.style.color = 'var(--gold)';
+    // ── Google Drive Connection Diagnostic Check ──
+    const btnCheckDrive = document.getElementById('btnCheckDrive');
+    const driveStatusBadge = document.getElementById('driveStatusBadge');
+    const driveDebugResult = document.getElementById('driveDebugResult');
+
+    if (btnCheckDrive) {
+      btnCheckDrive.addEventListener('click', async () => {
+        btnCheckDrive.disabled = true;
+        btnCheckDrive.textContent = 'Checking...';
+        if (driveDebugResult) {
+          driveDebugResult.style.display = 'block';
+          driveDebugResult.innerHTML = '<span style="color: var(--g3);">Testing connection to Google Drive API...</span>';
+        }
+
+        try {
+          const resp = await fetch('/api/gallery/debug', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + jwtToken }
+          });
+          const data = await resp.json();
+
+          if (data.success) {
+            if (driveStatusBadge) {
+              driveStatusBadge.textContent = 'Active';
+              driveStatusBadge.style.background = 'rgba(76, 175, 80, 0.1)';
+              driveStatusBadge.style.borderColor = '#4caf50';
+              driveStatusBadge.style.color = '#4caf50';
+            }
+            if (driveDebugResult) {
+              driveDebugResult.innerHTML = `
+                <div style="color: #4caf50; font-weight: bold; margin-bottom: 10px;">✅ Connection Successful!</div>
+                <strong>Folder Name:</strong> ${data.folderName}<br/>
+                <strong>Folder ID:</strong> <code>${data.folderId}</code><br/>
+                <strong>Service Account Email:</strong> <code>${data.clientEmail}</code><br/>
+                <div style="margin-top: 10px; color: var(--g3);">Your photos/videos will be uploaded directly to this Google Drive folder.</div>
+              `;
+            }
+          } else {
+            if (driveStatusBadge) {
+              driveStatusBadge.textContent = 'Connection Error';
+              driveStatusBadge.style.background = 'rgba(255, 82, 82, 0.1)';
+              driveStatusBadge.style.borderColor = '#ff5252';
+              driveStatusBadge.style.color = '#ff5252';
+            }
+            
+            // Helpful troubleshooting advice based on Google error message
+            let advice = '';
+            if (data.error && data.error.includes('File not found')) {
+              advice = `
+                <div style="margin-top: 10px; padding: 12px; background: rgba(255,193,7,0.15); border-left: 4px solid #ffc107; color: #ffc107; border-radius: 4px; line-height: 1.4;">
+                  <strong>💡 How to Fix:</strong><br/>
+                  Google cannot find the folder <code>${data.folderId || '1Wi8mnDm_0uK9HkPFx1t-txly5oMVIZOC'}</code>. Please share this folder in Google Drive with your Service Account email address as an <strong>Editor</strong>:<br/>
+                  <strong style="color: var(--white); select-all: true;">${data.clientEmail || 'your-service-account-email'}</strong>
+                </div>
+              `;
+            } else if (data.error && data.error.includes('invalid_grant')) {
+              advice = `
+                <div style="margin-top: 10px; padding: 12px; background: rgba(255,82,82,0.15); border-left: 4px solid #ff5252; color: #ff5252; border-radius: 4px; line-height: 1.4;">
+                  <strong>💡 How to Fix:</strong><br/>
+                  The private key or service account details in your <code>GOOGLE_DRIVE_CREDENTIALS</code> environment variable on Render are invalid. Please check your credentials JSON and copy-paste it again.
+                </div>
+              `;
+            }
+
+            if (driveDebugResult) {
+              driveDebugResult.innerHTML = `
+                <div style="color: #ff5252; font-weight: bold; margin-bottom: 10px;">❌ Connection Failed!</div>
+                <strong>Service Account Email:</strong> <code>${data.clientEmail || 'Not loaded'}</code><br/>
+                <strong>Folder ID:</strong> <code>${data.folderId || 'Not loaded'}</code><br/>
+                <strong>Error Details:</strong> <span style="color: #ff5252;">${data.error || 'Unknown error'}</span>
+                ${advice}
+              `;
+            }
+          }
+        } catch (err) {
+          if (driveStatusBadge) {
+            driveStatusBadge.textContent = 'Offline';
+            driveStatusBadge.style.background = 'rgba(255, 82, 82, 0.1)';
+            driveStatusBadge.style.borderColor = '#ff5252';
+            driveStatusBadge.style.color = '#ff5252';
+          }
+          if (driveDebugResult) {
+            driveDebugResult.innerHTML = `<span style="color: #ff5252;">Failed to connect to backend server: ${err.message}</span>`;
+          }
+        } finally {
+          btnCheckDrive.disabled = false;
+          btnCheckDrive.textContent = '🔍 Run Connection Check';
+        }
+      });
     }
 
     // Hide GitHub-specific UI elements since we now use the backend
-    if (ghTokenInput) ghTokenInput.closest?.('.gh-token-row')?.remove?.();
-    if (btnConnectGh) btnConnectGh.style.display = 'none';
-    if (btnDisconnectGh) btnDisconnectGh.style.display = 'none';
     if (syncToGithubCheck) {
       const syncRow = syncToGithubCheck.closest?.('label') || syncToGithubCheck.parentElement;
       if (syncRow) syncRow.style.display = 'none';

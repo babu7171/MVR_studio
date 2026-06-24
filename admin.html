@@ -342,24 +342,20 @@
           Deploy new photos and videos directly to your live website or test them locally in your browser.
         </p>
 
-        <!-- GitHub Sync Configuration Card -->
-        <div class="admin-github-settings" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r2); padding: 20px; margin-bottom: 25px;">
+        <!-- Google Drive Storage Status Card -->
+        <div class="admin-drive-settings" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r2); padding: 20px; margin-bottom: 25px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-            <h4 style="font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--gold); margin: 0;">🌐 GitHub Live Sync Settings</h4>
-            <span id="ghStatusBadge" class="admin-badge" style="background: rgba(255,82,82,0.1); border-color: rgba(255,82,82,0.3); color: #ff5252;">Disconnected</span>
+            <h4 style="font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--gold); margin: 0;">☁️ Google Drive Connection Status</h4>
+            <span id="driveStatusBadge" class="admin-badge" style="background: rgba(255,193,7,0.1); border-color: rgba(255,193,7,0.3); color: #ffc107;">Unchecked</span>
           </div>
           <p style="font-size: 0.8rem; color: var(--g3); margin-top: 0; margin-bottom: 15px;">
-            Connect your GitHub account to sync uploaded photos and videos directly to your live website. Your Personal Access Token (PAT) is stored securely in your own browser's local storage and is never shared.
+            Verify if your server's Google Drive credentials are configured and have correct permissions to access your shared upload folder.
           </p>
-          <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-            <div style="flex: 1; min-width: 250px;">
-              <input type="password" id="ghToken" placeholder="Enter GitHub Personal Access Token (PAT)" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--r1); color: var(--white); font-size: 0.85rem; outline: none;"/>
-            </div>
-            <button type="button" id="btnConnectGh" class="btn-gold" style="padding: 10px 20px; font-size: 0.82rem; border-radius: var(--r1); font-weight: 700; border: none; cursor: pointer;">Connect</button>
-            <button type="button" id="btnDisconnectGh" class="btn-logout" style="display: none; padding: 10px 20px; font-size: 0.82rem; border-radius: 50px; font-weight: 600; cursor: pointer;">Disconnect</button>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;">
+            <button type="button" id="btnCheckDrive" class="btn-gold" style="padding: 10px 20px; font-size: 0.82rem; border-radius: var(--r1); font-weight: 700; border: none; cursor: pointer;">🔍 Run Connection Check</button>
           </div>
-          <div style="margin-top: 12px; font-size: 0.76rem; color: var(--g2); line-height: 1.4;">
-            💡 <strong>How to get a token:</strong> Go to <a href="https://github.com/settings/tokens" target="_blank" style="color: var(--gold); text-decoration: underline;">GitHub Developer Settings</a> &rarr; Generate new token (classic) &rarr; Give it a name, check the <strong>repo</strong> scope, generate, and paste the code here.
+          <div id="driveDebugResult" style="display: none; padding: 15px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r1); font-size: 0.8rem; line-height: 1.5; text-align: left;">
+            <!-- Connection check details will be rendered here -->
           </div>
         </div>
 
