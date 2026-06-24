@@ -68,7 +68,17 @@ app.use((req, res, next) => {
 // Serve the frontend (index.html, admin.html, CSS, JS, images)
 const FRONTEND_DIR = path.join(__dirname, '..');
 app.use(express.static(FRONTEND_DIR, {
-  index: 'index.html'
+  index: 'index.html',
+  setHeaders: (res, filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.js') {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (ext === '.css') {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (ext === '.html') {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
 }));
 
 // ─── API Routes ─────────────────────────────────────────────────────────────
