@@ -757,6 +757,26 @@
       saveEnquiry(enquiry);
       try { localStorage.setItem('hide_booking_status', 'false'); } catch (e) {}
 
+      // ── Save to server database ──
+      try {
+        await fetch('/api/enquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            phone,
+            email: email || null,
+            service,
+            event_date: date || null,
+            guests: guests || null,
+            budget: cleanBudgetVal || null,
+            message: message || null
+          })
+        });
+      } catch (err) {
+        console.warn('Failed to save booking to server database:', err);
+      }
+
       // ── Ask user if they want to download the PDF Quotation ──
       if (confirm('Would you like to download your official MVR Studio Quotation PDF?')) {
         generateQuotationPDF(enquiry);

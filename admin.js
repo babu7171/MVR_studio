@@ -128,21 +128,31 @@
     });
   }
 
-  // Helper to load bookings from localStorage
-  function getEnquiries() {
+  // Helper to fetch enquiries from server database
+  async function fetchServerEnquiries() {
+    try {
+      const resp = await apiRequest('GET', '/api/enquiries');
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.enquiries || [];
+      }
+    } catch (err) {
+      console.warn('Failed to fetch enquiries from server:', err);
+    }
+    // Fallback to local storage
     try {
       return JSON.parse(localStorage.getItem('mvr_enquiries') || '[]');
-    } catch (e) {
+    } catch {
       return [];
     }
   }
 
   // ── Bookings Tab Logic ──
-  function renderBookings() {
+  async function renderBookings() {
     const container = document.getElementById('adminBookingsContainer');
     if (!container) return;
 
-    const enquiries = getEnquiries();
+    const enquiries = await fetchServerEnquiries();
 
     if (enquiries.length === 0) {
       container.innerHTML = `
@@ -159,9 +169,10 @@
     container.innerHTML = enquiries.map(item => {
       // 1. Event Date & Month Formatting
       let eventDateFormatted = 'Not specified';
-      if (item.date) {
+      const eventDateVal = item.event_date || item.date;
+      if (eventDateVal) {
         try {
-          const parts = item.date.split('-'); // ["YYYY", "MM", "DD"]
+          const parts = eventDateVal.split('-'); // ["YYYY", "MM", "DD"]
           if (parts.length === 3) {
             const y = parts[0];
             const m = parseInt(parts[1], 10) - 1;
@@ -169,18 +180,27 @@
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             eventDateFormatted = `${d} ${months[m]} ${y}`;
           } else {
-            eventDateFormatted = item.date;
+            eventDateFormatted = eventDateVal;
           }
         } catch (e) {
-          eventDateFormatted = item.date;
+          eventDateFormatted = eventDateVal;
         }
       }
 
       // 2. Booking Date & Month Formatting
-      let bookingDateFormatted = item.timestamp || '';
-      if (item.timestamp) {
+      let bookingDateFormatted = item.created_at || item.timestamp || '';
+      if (bookingDateFormatted) {
         try {
-          bookingDateFormatted = item.timestamp.split(',')[0];
+          if (bookingDateFormatted.includes('-')) {
+            // ISO format from SQLite database
+            const d = new Date(bookingDateFormatted.replace(' ', 'T'));
+            if (!isNaN(d.getTime())) {
+              bookingDateFormatted = d.toLocaleDateString('en-IN');
+            }
+          } else {
+            // Old timestamp format from local storage
+            bookingDateFormatted = bookingDateFormatted.split(',')[0];
+          }
         } catch (e) {}
       }
 
@@ -229,28 +249,45 @@
   }
 
   // Global delete booking handler
-  window.deleteBooking = function(id) {
+  window.deleteBooking = async function(id) {
     if (confirm("Are you sure you want to delete this booking request?")) {
       try {
-        let enquiries = getEnquiries();
-        enquiries = enquiries.filter(item => item.id !== id);
-        localStorage.setItem('mvr_enquiries', JSON.stringify(enquiries));
+        const resp = await apiRequest('DELETE', `/api/enquiries/${id}`);
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error || 'Failed to delete booking from database');
+        }
+        
+        // Also remove from local storage fallback
+        try {
+          let local = JSON.parse(localStorage.getItem('mvr_enquiries') || '[]');
+          local = local.filter(item => item.id !== id);
+          localStorage.setItem('mvr_enquiries', JSON.stringify(local));
+        } catch (e) {}
+        
         renderBookings();
       } catch (err) {
         console.error(err);
+        alert('Delete failed: ' + err.message);
       }
     }
   };
 
   // Clear all bookings
   if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', () => {
+    clearAllBtn.addEventListener('click', async () => {
       if (confirm("Are you sure you want to clear ALL booking requests? This action is permanent.")) {
         try {
+          const resp = await apiRequest('DELETE', '/api/enquiries');
+          if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err.error || 'Failed to clear database');
+          }
           localStorage.removeItem('mvr_enquiries');
           renderBookings();
         } catch (err) {
           console.error(err);
+          alert('Failed to clear bookings: ' + err.message);
         }
       }
     });
