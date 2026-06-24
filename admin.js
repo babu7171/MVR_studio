@@ -204,6 +204,15 @@
         } catch (e) {}
       }
 
+      let statusColor = 'rgba(255,255,255,0.4)';
+      let statusBg = 'rgba(255,255,255,0.05)';
+      const curStatus = item.status || 'New';
+      if (curStatus === 'New') { statusColor = 'var(--gold)'; statusBg = 'rgba(201,165,90,0.1)'; }
+      else if (curStatus === 'Contacted') { statusColor = '#00bcd4'; statusBg = 'rgba(0,188,212,0.1)'; }
+      else if (curStatus === 'Confirmed') { statusColor = '#4caf50'; statusBg = 'rgba(76,175,80,0.1)'; }
+      else if (curStatus === 'Completed') { statusColor = '#8bc34a'; statusBg = 'rgba(139,195,74,0.1)'; }
+      else if (curStatus === 'Cancelled') { statusColor = '#ff5252'; statusBg = 'rgba(255,82,82,0.1)'; }
+
       return `
         <div class="admin-booking-card" id="adminCard-${item.id}">
           <div class="admin-booking-card-top">
@@ -236,6 +245,16 @@
             <div class="admin-booking-detail-item">
               <strong>Budget</strong>
               <span>${item.budget || 'Not specified'}</span>
+            </div>
+            <div class="admin-booking-detail-item">
+              <strong>Status</strong>
+              <select onchange="window.updateBookingStatus(${item.id}, this.value)" style="background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusColor}; border-radius: var(--r1); padding: 3px 6px; font-size: 0.78rem; outline: none; cursor: pointer; font-weight: 600; width: 100%; max-width: 130px;">
+                <option value="New" style="background: var(--navy); color: var(--gold);" ${curStatus === 'New' ? 'selected' : ''}>⏳ New</option>
+                <option value="Contacted" style="background: var(--navy); color: #00bcd4;" ${curStatus === 'Contacted' ? 'selected' : ''}>📞 Contacted</option>
+                <option value="Confirmed" style="background: var(--navy); color: #4caf50;" ${curStatus === 'Confirmed' ? 'selected' : ''}>✅ Confirmed</option>
+                <option value="Completed" style="background: var(--navy); color: #8bc34a;" ${curStatus === 'Completed' ? 'selected' : ''}>🎉 Completed</option>
+                <option value="Cancelled" style="background: var(--navy); color: #ff5252;" ${curStatus === 'Cancelled' ? 'selected' : ''}>❌ Cancelled</option>
+              </select>
             </div>
           </div>
           ${item.message ? `
@@ -270,6 +289,33 @@
         console.error(err);
         alert('Delete failed: ' + err.message);
       }
+    }
+  };
+
+  // Global update booking status handler
+  window.updateBookingStatus = async function(id, newStatus) {
+    try {
+      const resp = await apiRequest('PATCH', `/api/enquiries/${id}/status`, { status: newStatus });
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || 'Failed to update status in database');
+      }
+      
+      // Also update in local storage fallback
+      try {
+        let local = JSON.parse(localStorage.getItem('mvr_enquiries') || '[]');
+        const idx = local.findIndex(item => item.id === id);
+        if (idx !== -1) {
+          local[idx].status = newStatus;
+          localStorage.setItem('mvr_enquiries', JSON.stringify(local));
+        }
+      } catch (e) {}
+
+      // Re-render the bookings tab to reflect updated styling and status dropdown
+      renderBookings();
+    } catch (err) {
+      console.error(err);
+      alert('Status update failed: ' + err.message);
     }
   };
 

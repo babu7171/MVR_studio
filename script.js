@@ -204,7 +204,7 @@
       stars: 5,
       text: "MVR Studio ne hamare wedding ko itna sundar capture kiya! Drone shots toh bilkul filmy lag rahe the. Har ritual ka ek-ek photo perfect hai. Zindagi bhar yaad rahega!",
       name: "Ananya & Arjun",
-      role: "Wedding Clients, Hyderabad"
+      role: "Wedding Clients, Kalyandurg"
     },
     {
       stars: 5,
@@ -759,7 +759,7 @@
 
       // ── Save to server database ──
       try {
-        await fetch('/api/enquiries', {
+        const dbResp = await fetch('/api/enquiries', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -773,6 +773,17 @@
             message: message || null
           })
         });
+        if (dbResp.ok) {
+          const dbData = await dbResp.json();
+          if (dbData && dbData.success && dbData.id) {
+            enquiry.id = dbData.id;
+            const existing = getEnquiries();
+            if (existing.length > 0) {
+              existing[existing.length - 1].id = dbData.id;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+            }
+          }
+        }
       } catch (err) {
         console.warn('Failed to save booking to server database:', err);
       }
@@ -957,9 +968,9 @@
     doc.setTextColor(cDark[0], cDark[1], cDark[2]);
     doc.setFontSize(10);
     doc.setFont('Helvetica', 'bold');
-    doc.text("MVR Studio Hyderabad", 15, 54);
+    doc.text("MVR Studio Kalyandurg", 15, 54);
     doc.setFont('Helvetica', 'normal');
-    doc.text("Near Main Market, Hyderabad, Telangana", 15, 60);
+    doc.text("9E-65, Hindu Puram Rd, opp. CANARA BANK, Kalyandurg, AP - 515761", 15, 60);
     doc.text("Phone: +91 96523 41566", 15, 66);
     doc.text("Email: info@mvrstudio.in", 15, 72);
 
@@ -1028,7 +1039,7 @@
     
     const terms = [
       "1. Date Reservation: A 30% non-refundable advance payment is required to secure your booking date.",
-      "2. Travel & Logistics: For events outside Hyderabad, travel and accommodation charges shall be covered by client.",
+      "2. Travel & Logistics: For events outside Kalyandurg, travel and accommodation charges shall be covered by client.",
       "3. Raw Files: Raw unedited files remain copyright of MVR Studio and are delivered upon request.",
       "4. Delivery Timeline: High-resolution edited photos will be delivered via online gallery within 7-15 working days.",
       "5. Balance Payment: The remaining 70% balance must be cleared on or before the day of the main event."
@@ -1060,7 +1071,7 @@
   }
 
   // ── Check last booking status on this browser ──
-  function checkBookingStatus() {
+  async function checkBookingStatus() {
     const statusPanel = document.getElementById('bookingStatusPanel');
     if (!statusPanel || !bookingForm) return;
 
@@ -1070,6 +1081,38 @@
 
     if (enquiries && enquiries.length > 0 && !hideStatus) {
       const latest = enquiries[enquiries.length - 1];
+
+      let currentStatus = latest.status || 'New';
+      if (latest.id && typeof latest.id === 'number' && latest.id < 1000000000000) {
+        try {
+          const res = await fetch(`/api/enquiries/status/${latest.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.success && data.status) {
+              currentStatus = data.status;
+              latest.status = currentStatus;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(enquiries));
+            }
+          }
+        } catch (err) {
+          console.warn('Could not fetch real-time booking status from server:', err);
+        }
+      }
+
+      let statusBadgeHtml = '';
+      if (currentStatus === 'New' || currentStatus === 'Under Review') {
+        statusBadgeHtml = `<span class="bsc-status-badge" style="background: rgba(201, 165, 90, 0.12); border: 1px solid rgba(201, 165, 90, 0.3); color: var(--gold); padding: 6px 16px; border-radius: 50px; text-transform: uppercase; font-size: .8rem; font-weight: 700; letter-spacing: 1px;">⏳ Under Review</span>`;
+      } else if (currentStatus === 'Contacted') {
+        statusBadgeHtml = `<span class="bsc-status-badge" style="background: rgba(0, 188, 212, 0.12); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 6px 16px; border-radius: 50px; text-transform: uppercase; font-size: .8rem; font-weight: 700; letter-spacing: 1px;">📞 Contacted</span>`;
+      } else if (currentStatus === 'Confirmed') {
+        statusBadgeHtml = `<span class="bsc-status-badge" style="background: rgba(76, 175, 80, 0.12); border: 1px solid rgba(76, 175, 80, 0.3); color: #4caf50; padding: 6px 16px; border-radius: 50px; text-transform: uppercase; font-size: .8rem; font-weight: 700; letter-spacing: 1px;">✅ Confirmed</span>`;
+      } else if (currentStatus === 'Completed') {
+        statusBadgeHtml = `<span class="bsc-status-badge" style="background: rgba(139, 195, 74, 0.12); border: 1px solid rgba(139, 195, 74, 0.3); color: #8bc34a; padding: 6px 16px; border-radius: 50px; text-transform: uppercase; font-size: .8rem; font-weight: 700; letter-spacing: 1px;">🎉 Completed</span>`;
+      } else if (currentStatus === 'Cancelled') {
+        statusBadgeHtml = `<span class="bsc-status-badge" style="background: rgba(255, 82, 82, 0.12); border: 1px solid rgba(255, 82, 82, 0.3); color: #ff5252; padding: 6px 16px; border-radius: 50px; text-transform: uppercase; font-size: .8rem; font-weight: 700; letter-spacing: 1px;">❌ Cancelled</span>`;
+      } else {
+        statusBadgeHtml = `<span class="bsc-status-badge" style="background: rgba(201, 165, 90, 0.12); border: 1px solid rgba(201, 165, 90, 0.3); color: var(--gold); padding: 6px 16px; border-radius: 50px; text-transform: uppercase; font-size: .8rem; font-weight: 700; letter-spacing: 1px;">${currentStatus}</span>`;
+      }
 
       statusPanel.innerHTML = `
         <h3>📅 Your Booking Status</h3>
@@ -1083,7 +1126,7 @@
           <div class="bsc-item"><span class="bsc-label">Budget:</span><span class="bsc-val">${latest.budget || 'Not specified'}</span></div>
           <div class="bsc-item" style="border-bottom:none; margin-top: 10px;">
             <span class="bsc-label">Current Status:</span>
-            <span class="bsc-status-badge">⏳ Under Review</span>
+            ${statusBadgeHtml}
           </div>
         </div>
         <p style="font-size: 0.8rem; color: var(--g4); margin-bottom: 20px; font-style: italic;">

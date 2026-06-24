@@ -39,6 +39,30 @@ router.post('/', (req, res) => {
 });
 
 /**
+ * GET /api/enquiries/status/:id
+ * Retrieve specific enquiry status (public)
+ */
+router.get('/status/:id', (req, res) => {
+  try {
+    const db = getDb();
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid booking ID' });
+    }
+
+    const row = db.prepare('SELECT status FROM enquiries WHERE id = ?').get(id);
+    if (!row) {
+      return res.status(404).json({ error: 'Booking enquiry not found' });
+    }
+
+    res.json({ success: true, status: row.status });
+  } catch (err) {
+    console.error('Enquiry status query error:', err);
+    res.status(500).json({ error: 'Failed to query status: ' + err.message });
+  }
+});
+
+/**
  * GET /api/enquiries
  * List all enquiries (admin protected)
  */
@@ -62,7 +86,7 @@ router.patch('/:id/status', requireAuth, (req, res) => {
     const db = getDb();
     const id = parseInt(req.params.id, 10);
     const { status } = req.body;
-    const allowed = ['New', 'Contacted', 'Completed', 'Cancelled'];
+    const allowed = ['New', 'Contacted', 'Confirmed', 'Completed', 'Cancelled'];
 
     if (!allowed.includes(status)) {
       return res.status(400).json({ error: `status must be one of: ${allowed.join(', ')}` });
