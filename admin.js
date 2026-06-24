@@ -303,6 +303,9 @@
     const upLabel = document.getElementById('adminUpLabel');
     const previewContainer = document.getElementById('adminGalPreview');
 
+    let activeUploadCategory = null;
+    let isFolderTriggered = false;
+
     // GitHub Connection controls
     const ghTokenInput = document.getElementById('ghToken');
     const btnConnectGh = document.getElementById('btnConnectGh');
@@ -384,16 +387,8 @@
     }
 
     window.triggerFolderUpload = function(categoryId) {
-      if (uploadCategorySelect) {
-        uploadCategorySelect.value = categoryId;
-        // Visual cue
-        uploadCategorySelect.style.border = '1px solid var(--gold)';
-        uploadCategorySelect.style.boxShadow = '0 0 10px rgba(201,165,90,0.2)';
-        setTimeout(() => {
-          uploadCategorySelect.style.border = '1px solid rgba(255,255,255,0.08)';
-          uploadCategorySelect.style.boxShadow = 'none';
-        }, 1500);
-      }
+      activeUploadCategory = categoryId;
+      isFolderTriggered = true;
       if (fileInput) {
         fileInput.click();
       }
@@ -653,11 +648,19 @@
       });
       dropZone.addEventListener('drop', e => {
         e.preventDefault();
+        activeUploadCategory = null; // Ensure drag and drop uses the global select
         handleUploadFiles(e.dataTransfer.files);
       });
     }
 
     if (fileInput) {
+      fileInput.addEventListener('click', () => {
+        if (!isFolderTriggered) {
+          activeUploadCategory = null;
+        }
+        isFolderTriggered = false;
+      });
+
       fileInput.addEventListener('change', () => {
         handleUploadFiles(fileInput.files);
         fileInput.value = '';
@@ -668,13 +671,18 @@
     async function handleUploadFiles(files) {
       if (!files || !files.length) return;
 
+      const category = activeUploadCategory || (uploadCategorySelect ? uploadCategorySelect.value : 'wedding');
+      activeUploadCategory = null; // reset immediately
+
+      const categoryOption = uploadCategorySelect ? uploadCategorySelect.querySelector(`option[value="${category}"]`) : null;
+      const categoryName = categoryOption ? categoryOption.textContent.trim() : category;
+
       if (uploadProg) uploadProg.style.display = 'flex';
-      if (upLabel) upLabel.textContent = `Uploading ${files.length} file(s) to server...`;
+      if (upLabel) upLabel.textContent = `Uploading ${files.length} file(s) to ${categoryName}...`;
       if (upFill) upFill.style.width = '30%';
 
       const formData = new FormData();
       const caption = uploadCaptionInput ? uploadCaptionInput.value.trim() : '';
-      const category = uploadCategorySelect ? uploadCategorySelect.value : 'wedding';
 
       Array.from(files).forEach(file => formData.append('files', file));
       if (caption) formData.append('caption', caption);
