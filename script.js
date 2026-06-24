@@ -895,6 +895,47 @@
     });
   }
 
+  // ── Block Booked Dates in Calendar ──
+  async function initBookingCalendar() {
+    const fDate = document.getElementById('fDate');
+    if (!fDate) return;
+
+    // Set minimum selectable date to today's date
+    const todayStr = new Date().toISOString().split('T')[0];
+    fDate.setAttribute('min', todayStr);
+
+    let bookedDates = [];
+    try {
+      const resp = await fetch('/api/enquiries/booked-dates');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.bookedDates) {
+          bookedDates = data.bookedDates; // Format: ["YYYY-MM-DD", ...]
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch booked dates from server:', err);
+    }
+
+    // Add listener to validate selected date
+    fDate.addEventListener('input', () => {
+      const selected = fDate.value; // Format: "YYYY-MM-DD"
+      if (bookedDates.includes(selected)) {
+        const dateWarn = document.getElementById('dateBookedWarn');
+        if (dateWarn) {
+          dateWarn.textContent = `⚠️ The date ${selected} is already fully booked. Please select another date.`;
+          dateWarn.style.display = 'block';
+        } else {
+          alert(`⚠️ MVR Studio is already booked on ${selected}. Please choose another date.`);
+        }
+        fDate.value = ''; // Reset the input
+      } else {
+        const dateWarn = document.getElementById('dateBookedWarn');
+        if (dateWarn) dateWarn.style.display = 'none';
+      }
+    });
+  }
+
   // ── PDF Quotation Generator ──
   function generateQuotationPDF(booking) {
     if (!window.jspdf) {
@@ -1188,8 +1229,9 @@
     }
   }
 
-  // Run status check on load
+  // Run status check and calendar initialization on load
   checkBookingStatus();
+  initBookingCalendar();
 
   /* ══════════════════════════════════════════════════
      DATA STORAGE (localStorage)

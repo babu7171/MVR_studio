@@ -102,6 +102,26 @@ router.get('/status-by-phone/:phone', (req, res) => {
 });
 
 /**
+ * GET /api/enquiries/booked-dates
+ * Retrieve all confirmed and completed booking dates (public)
+ */
+router.get('/booked-dates', (req, res) => {
+  try {
+    const db = getDb();
+    const rows = db.prepare(`
+      SELECT DISTINCT event_date FROM enquiries 
+      WHERE status IN ('Confirmed', 'Completed') AND event_date IS NOT NULL AND event_date != ''
+    `).all();
+
+    const dates = rows.map(r => r.event_date);
+    res.json({ success: true, bookedDates: dates });
+  } catch (err) {
+    console.error('Booked dates query error:', err);
+    res.status(500).json({ error: 'Failed to query booked dates: ' + err.message });
+  }
+});
+
+/**
  * GET /api/enquiries
  * List all enquiries (admin protected)
  */
