@@ -675,7 +675,16 @@
       activeUploadCategory = null; // reset immediately
 
       const categoryOption = uploadCategorySelect ? uploadCategorySelect.querySelector(`option[value="${category}"]`) : null;
-      const categoryName = categoryOption ? categoryOption.textContent.trim() : category;
+      let categoryName = categoryOption ? categoryOption.textContent.trim() : category;
+
+      if (categoryName === category) {
+        const fallbackSvc = (typeof DEFAULT_SERVICES_FALLBACK !== 'undefined')
+          ? DEFAULT_SERVICES_FALLBACK.find(s => s.id === category)
+          : null;
+        if (fallbackSvc) {
+          categoryName = `${fallbackSvc.icon} ${fallbackSvc.name}`;
+        }
+      }
 
       if (uploadProg) uploadProg.style.display = 'flex';
       if (upLabel) upLabel.textContent = `Uploading ${files.length} file(s) to ${categoryName}...`;

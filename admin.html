@@ -370,49 +370,7 @@
           </div>
         </div>
 
-        <!-- Upload Details (Caption & Category) -->
-        <div class="upload-metadata" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); border-radius: var(--r2); padding: 20px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-wrap: wrap;">
-          <div class="fg">
-            <label style="display: block; font-size: 0.8rem; color: var(--g2); margin-bottom: 6px;">Image/Video Caption</label>
-            <input type="text" id="uploadCaption" placeholder="e.g. Traditional Mandap Decor" style="width:100%; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); outline:none; font-size: 0.85rem;"/>
-          </div>
-          <div class="fg">
-            <label style="display: block; font-size: 0.8rem; color: var(--g2); margin-bottom: 6px;">Target Category</label>
-            <select id="uploadCategory" style="width:100%; padding:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--r1); color:var(--white); outline:none; font-size: 0.85rem;">
-              <option value="prewedding" selected>💑 Pre Wedding Photoshoot</option>
-              <option value="all">General Gallery (All)</option>
-              <option value="wedding">💍 Wedding Photographers</option>
-              <option value="baraat">🐴 Baraat & Reception</option>
-              <option value="mehndi">🌸 Mehndi & Haldi</option>
-              <option value="candid">📷 Candid Wedding Photography</option>
-              <option value="videographers">🎬 Wedding Videographers</option>
-              <option value="sangeet">💃 Sangeet Ceremony</option>
-              <option value="engagement">💎 Engagement Photoshoot</option>
-              <option value="drone">🚁 Drone Aerial Photography</option>
-              <option value="events">🎉 Event Photographers</option>
-              <option value="birthday">🎂 Birthday Photoshoot</option>
-              <option value="housewarming">🏠 House Warming Photoshoot</option>
-              <option value="naming">👶 Naming Ceremony</option>
-              <option value="upanayanam">🙏 Upanayanam Photography</option>
-              <option value="family">👨‍👩‍👧‍👦 Family Photoshoot</option>
-              <option value="maternity">🤰 Maternity Photoshoot</option>
-              <option value="newborn">🍼 Newborn Photoshoot</option>
-              <option value="portfolio">👤 Portfolio Shoot</option>
-              <option value="album">📚 Album Design & Print</option>
-            </select>
-          </div>
-          <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;">
-            <input type="checkbox" id="syncToGithub" checked style="accent-color: var(--gold); width: 16px; height: 16px; cursor: pointer;"/>
-            <label for="syncToGithub" style="font-size: 0.82rem; color: var(--g3); cursor: pointer; user-select: none;">Sync with GitHub Repository (Commit directly to babu7171/MVR_studio)</label>
-          </div>
-        </div>
-        <label class="upload-drop" id="adminDropZone" for="adminFileInput" style="display: block; padding: 40px; border: 2px dashed rgba(255,255,255,0.15); border-radius: var(--r3); text-align: center; cursor: pointer; transition: all 0.3s ease;">
-          <div class="ud-icon" style="font-size: 2.5rem; margin-bottom: 10px;">📁</div>
-          <h3 style="font-size: 1.2rem; color: var(--white); margin: 0 0 5px 0;">Drag &amp; Drop Photos or Videos</h3>
-          <p style="font-size: 0.82rem; color: var(--g3); margin: 0 0 15px 0;">Or click anywhere to select files from your computer</p>
-          <span class="btn-gold" style="font-size: 0.8rem; padding: 8px 20px; border-radius:var(--r1); border:none; font-weight:700; cursor:pointer; display: inline-block;">Choose Files</span>
           <input type="file" id="adminFileInput" multiple style="display: none;"/>
-        </label>
         
         <div class="upload-prog" id="adminUploadProg" style="display:none; margin-top: 20px; flex-direction:column; gap:8px;">
           <div class="up-bar" style="width:100%; height:6px; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden;">
