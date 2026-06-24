@@ -175,11 +175,23 @@ router.post('/', requireAuth, upload.array('files', 20), async (req, res) => {
       const timestamp = Date.now();
       const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
       const fileName = `${timestamp}-${safeName}`;
+      const cat = category || 'wedding';
       
       let src;
       if (hasDrive) {
-        // Upload directly to Google Drive
-        const uploadResult = await uploadFileToDrive(file.buffer, fileName, file.mimetype);
+        // Look up human-readable service name for subfolder name mapping
+        let subfolderName = null;
+        try {
+          const categoryRow = db.prepare('SELECT name FROM services WHERE id = ?').get(cat);
+          if (categoryRow) {
+            subfolderName = categoryRow.name;
+          }
+        } catch (dbErr) {
+          console.warn('Could not query service name for category:', cat, dbErr.message);
+        }
+
+        // Upload directly to Google Drive (with subfolder mapping)
+        const uploadResult = await uploadFileToDrive(file.buffer, fileName, file.mimetype, subfolderName);
         src = uploadResult.url;
       } else {
         // Fallback: save to local server disk
@@ -190,7 +202,6 @@ router.post('/', requireAuth, upload.array('files', 20), async (req, res) => {
 
       const type = isVideo ? 'video' : 'photo';
       const cap = caption || file.originalname.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-      const cat = category || 'wedding';
       const uploadedAt = new Date().toISOString();
 
       const result = insertStmt.run(src, type, cap, cat, uploadedAt);
