@@ -43,53 +43,70 @@ const upload = multer({
 router.get('/debug', requireAuth, async (req, res) => {
   try {
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-    const credentialsJson = process.env.GOOGLE_DRIVE_CREDENTIALS;
+    
+    // Check which authentication mode is active
+    const useOAuth2 = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN);
+    const useServiceAccount = !useOAuth2 && !!process.env.GOOGLE_DRIVE_CREDENTIALS;
 
-    if (!credentialsJson) {
+    if (!useOAuth2 && !useServiceAccount) {
       return res.json({
         success: false,
-        error: 'GOOGLE_DRIVE_CREDENTIALS environment variable is missing.'
-      });
-    }
-
-    let credentials;
-    try {
-      credentials = JSON.parse(credentialsJson);
-    } catch (parseErr) {
-      return res.json({
-        success: false,
-        error: `Failed to parse GOOGLE_DRIVE_CREDENTIALS JSON: ${parseErr.message}`
-      });
-    }
-
-    const clientEmail = credentials.client_email;
-    if (!clientEmail) {
-      return res.json({
-        success: false,
-        error: 'client_email is missing from GOOGLE_DRIVE_CREDENTIALS JSON.'
+        error: 'No Google Drive credentials found. Please configure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN or GOOGLE_DRIVE_CREDENTIALS.'
       });
     }
 
     if (!folderId) {
       return res.json({
         success: false,
-        clientEmail,
         error: 'GOOGLE_DRIVE_FOLDER_ID environment variable is missing.'
       });
     }
 
-    try {
-      const { google } = require('googleapis');
+    const { google } = require('googleapis');
+    let auth;
+    let clientType = '';
+    let details = {};
+
+    if (useOAuth2) {
+      clientType = 'OAuth2 User';
+      auth = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET
+      );
+      auth.setCredentials({
+        refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+      });
+      details = {
+        clientId: process.env.GOOGLE_CLIENT_ID.substring(0, 15) + '...'
+      };
+    } else {
+      clientType = 'Service Account';
+      let credentials;
+      try {
+        credentials = JSON.parse(process.env.GOOGLE_DRIVE_CREDENTIALS);
+      } catch (err) {
+        return res.json({
+          success: false,
+          error: `Failed to parse GOOGLE_DRIVE_CREDENTIALS JSON: ${err.message}`
+        });
+      }
+      
       const privateKey = credentials.private_key
         ? credentials.private_key.replace(/\\n/g, '\n')
         : null;
 
-      const auth = new google.auth.JWT({
-        email: clientEmail,
+      auth = new google.auth.JWT({
+        email: credentials.client_email,
         key: privateKey,
         scopes: ['https://www.googleapis.com/auth/drive']
       });
+      
+      details = {
+        clientEmail: credentials.client_email
+      };
+    }
 
+    try {
       const drive = google.drive({ version: 'v3', auth });
 
       const folderMetadata = await drive.files.get({
@@ -99,7 +116,8 @@ router.get('/debug', requireAuth, async (req, res) => {
 
       return res.json({
         success: true,
-        clientEmail,
+        clientType,
+        ...details,
         folderId,
         folderName: folderMetadata.data.name,
         capabilities: folderMetadata.data.capabilities
@@ -107,7 +125,8 @@ router.get('/debug', requireAuth, async (req, res) => {
     } catch (driveErr) {
       return res.json({
         success: false,
-        clientEmail,
+        clientType,
+        ...details,
         folderId,
         error: `Google Drive API error: ${driveErr.message}`
       });
@@ -164,7 +183,7 @@ router.post('/', requireAuth, upload.array('files', 20), async (req, res) => {
     const db = getDb();
     const { caption, category } = req.body;
     const insertedItems = [];
-    const hasDrive = !!process.env.GOOGLE_DRIVE_CREDENTIALS;
+    const hasDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS || (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN));
 
     const insertStmt = db.prepare(
       'INSERT INTO gallery (src, type, cap, category, uploaded_at) VALUES (?, ?, ?, ?, ?)'
@@ -225,7 +244,7 @@ router.delete('/batch', requireAuth, async (req, res) => {
   try {
     const db = getDb();
     const { ids } = req.body;
-    const hasDrive = !!process.env.GOOGLE_DRIVE_CREDENTIALS;
+    const hasDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS || (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN));
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'ids array is required' });
@@ -277,7 +296,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
     const id = parseInt(req.params.id, 10);
-    const hasDrive = !!process.env.GOOGLE_DRIVE_CREDENTIALS;
+    const hasDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS || (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN));
 
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid gallery item ID' });

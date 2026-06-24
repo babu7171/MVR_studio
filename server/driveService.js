@@ -11,27 +11,47 @@ let driveClient = null;
  */
 function getDriveClient() {
   if (!driveClient) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+
+    // 1. Try OAuth2 User authentication first (avoids service account zero quota limits)
+    if (clientId && clientSecret && refreshToken) {
+      try {
+        const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+        oauth2Client.setCredentials({ refresh_token: refreshToken });
+        driveClient = google.drive({ version: 'v3', auth: oauth2Client });
+        console.log('☁️ Google Drive client initialized using OAuth2 User Refresh Token');
+        return driveClient;
+      } catch (oauthErr) {
+        console.warn('⚠️ Failed to initialize Google Drive OAuth2 User client:', oauthErr.message);
+      }
+    }
+
+    // 2. Fallback to Service Account JWT authentication
     const credentialsJson = process.env.GOOGLE_DRIVE_CREDENTIALS;
-    if (!credentialsJson) {
-      throw new Error('GOOGLE_DRIVE_CREDENTIALS environment variable is missing.');
-    }
-    try {
-      const credentials = JSON.parse(credentialsJson);
-      
-      const privateKey = credentials.private_key
-        ? credentials.private_key.replace(/\\n/g, '\n')
-        : null;
+    if (credentialsJson) {
+      try {
+        const credentials = JSON.parse(credentialsJson);
+        const privateKey = credentials.private_key
+          ? credentials.private_key.replace(/\\n/g, '\n')
+          : null;
 
-      const auth = new google.auth.JWT({
-        email: credentials.client_email,
-        key: privateKey,
-        scopes: ['https://www.googleapis.com/auth/drive']
-      });
+        const auth = new google.auth.JWT({
+          email: credentials.client_email,
+          key: privateKey,
+          scopes: ['https://www.googleapis.com/auth/drive']
+        });
 
-      driveClient = google.drive({ version: 'v3', auth });
-    } catch (err) {
-      throw new Error(`Failed to initialize Google Drive client: ${err.message}`);
+        driveClient = google.drive({ version: 'v3', auth });
+        console.log('☁️ Google Drive client initialized using Service Account JWT');
+        return driveClient;
+      } catch (err) {
+        throw new Error(`Failed to initialize Google Drive Service Account client: ${err.message}`);
+      }
     }
+
+    throw new Error('Neither Google OAuth2 User credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN) nor Service Account credentials (GOOGLE_DRIVE_CREDENTIALS) are configured.');
   }
   return driveClient;
 }
