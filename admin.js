@@ -7,47 +7,36 @@
   const loginError = document.getElementById('loginError');
   const btnLogout = document.getElementById('btnLogout');
   const clearAllBtn = document.getElementById('btnClearAll');
-  
-  const repoOwner = 'babu7171';
-  const repoName = 'MVR_studio';
 
-  // Helper to fetch the latest gallery_db.json with cache bypass (real-time GitHub API)
+  // ─── Backend API JWT Auth ──────────────────────────────────────────────────
+  // JWT token obtained from /api/auth/login, stored in sessionStorage
+  let jwtToken = sessionStorage.getItem('mvr_jwt_token') || '';
+  let isAuthenticated = !!jwtToken;
+
+  // Helper: make authenticated API requests
+  function apiRequest(method, path, body) {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (jwtToken) opts.headers['Authorization'] = 'Bearer ' + jwtToken;
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(path, opts);
+  }
+
+  // Helper: fetch services from backend
   async function fetchDbContent() {
-    const token = localStorage.getItem('mvr_github_token') || '';
     try {
-      if (token) {
-        const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json?t=` + Date.now();
-        const resp = await fetch(dbUrl, {
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3.raw'
-          }
-        });
-        if (resp.ok) {
-          return await resp.json();
-        }
-      }
+      const resp = await fetch('/api/services');
+      if (resp.ok) return await resp.json();
     } catch (err) {
-      console.warn('Authenticated DB fetch failed, falling back to public CDN', err);
-    }
-
-    try {
-      const resp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
-      if (resp.ok) {
-        return await resp.json();
-      }
-    } catch (err) {
-      console.warn('Could not fetch public gallery_db.json', err);
+      console.warn('Could not fetch services from backend API', err);
     }
     return null;
   }
 
-  // Check auth status from sessionStorage
-  let isAuthenticated = sessionStorage.getItem('mvr_admin_auth') === 'true';
-  let authToken = sessionStorage.getItem('mvr_admin_auth_token') || '';
-
   function updateUIForAuth() {
-    if (isAuthenticated && authToken === 'static-token-123') {
+    if (isAuthenticated && jwtToken) {
       if (loginSection) loginSection.style.display = 'none';
       if (dashboardSection) {
         dashboardSection.style.display = 'block';
@@ -59,23 +48,41 @@
     }
   }
 
-  // Handle Login Submission Client-Side
+  // Handle Login Submission — calls backend /api/auth/login
   if (loginForm) {
-    loginForm.addEventListener('submit', e => {
+    loginForm.addEventListener('submit', async e => {
       e.preventDefault();
       const passVal = document.getElementById('adminPass')?.value;
       if (!passVal) return;
 
-      if (passVal === 'mvr@123') {
-        isAuthenticated = true;
-        authToken = 'static-token-123';
-        sessionStorage.setItem('mvr_admin_auth', 'true');
-        sessionStorage.setItem('mvr_admin_auth_token', 'static-token-123');
-        if (loginError) loginError.style.display = 'none';
-        updateUIForAuth();
-      } else {
+      if (loginError) { loginError.style.display = 'none'; }
+
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: passVal })
+        });
+        const data = await resp.json();
+
+        if (resp.ok && data.token) {
+          jwtToken = data.token;
+          isAuthenticated = true;
+          sessionStorage.setItem('mvr_jwt_token', jwtToken);
+          // Keep backward compat for any code checking old session keys
+          sessionStorage.setItem('mvr_admin_auth', 'true');
+          if (loginError) loginError.style.display = 'none';
+          updateUIForAuth();
+        } else {
+          if (loginError) {
+            loginError.textContent = '\u274C ' + (data.error || 'Incorrect password!');
+            loginError.style.display = 'block';
+          }
+        }
+      } catch (err) {
+        console.error('Login error:', err);
         if (loginError) {
-          loginError.textContent = '❌ Incorrect password!';
+          loginError.textContent = '\u274C Cannot connect to server. Is it running?';
           loginError.style.display = 'block';
         }
       }
@@ -85,10 +92,10 @@
   // Handle Logout
   if (btnLogout) {
     btnLogout.addEventListener('click', () => {
+      jwtToken = '';
       isAuthenticated = false;
-      authToken = '';
+      sessionStorage.removeItem('mvr_jwt_token');
       sessionStorage.removeItem('mvr_admin_auth');
-      sessionStorage.removeItem('mvr_admin_auth_token');
       location.reload();
     });
   }
@@ -287,7 +294,7 @@
     });
   }
 
-  // ── Gallery Tab Logic (base64 local storage + GitHub integration) ──
+  // ── Gallery Tab Logic — uses backend REST API ──
   function initGalleryManager() {
     const fileInput = document.getElementById('adminFileInput');
     const dropZone = document.getElementById('adminDropZone');
@@ -394,122 +401,44 @@
 
     renderFolderGrid();
 
-    let ghToken = localStorage.getItem('mvr_github_token') || '';
-    const repoOwner = 'babu7171';
-    const repoName = 'MVR_studio';
-    let githubItems = [];
-
-    // Connection UI status updates
-    function updateGhUI() {
-      if (ghToken) {
-        if (ghStatusBadge) {
-          ghStatusBadge.textContent = 'Connected to babu7171/MVR_studio';
-          ghStatusBadge.style.background = 'rgba(201, 165, 90, 0.1)';
-          ghStatusBadge.style.borderColor = 'var(--gold)';
-          ghStatusBadge.style.color = 'var(--gold)';
-        }
-        if (ghTokenInput) {
-          ghTokenInput.value = '••••••••••••••••••••';
-          ghTokenInput.disabled = true;
-        }
-        if (btnConnectGh) btnConnectGh.style.display = 'none';
-        if (btnDisconnectGh) btnDisconnectGh.style.display = 'inline-block';
-      } else {
-        if (ghStatusBadge) {
-          ghStatusBadge.textContent = 'Disconnected';
-          ghStatusBadge.style.background = 'rgba(255,82,82,0.1)';
-          ghStatusBadge.style.borderColor = 'rgba(255,82,82,0.3)';
-          ghStatusBadge.style.color = '#ff5252';
-        }
-        if (ghTokenInput) {
-          ghTokenInput.value = '';
-          ghTokenInput.disabled = false;
-        }
-        if (btnConnectGh) btnConnectGh.style.display = 'inline-block';
-        if (btnDisconnectGh) btnDisconnectGh.style.display = 'none';
-      }
+    // ── Backend connection status badge ──
+    if (ghStatusBadge) {
+      ghStatusBadge.textContent = '✅ Connected to Backend Server';
+      ghStatusBadge.style.background = 'rgba(201, 165, 90, 0.1)';
+      ghStatusBadge.style.borderColor = 'var(--gold)';
+      ghStatusBadge.style.color = 'var(--gold)';
     }
 
-    if (btnConnectGh) {
-      btnConnectGh.addEventListener('click', () => {
-        const val = ghTokenInput.value.trim();
-        if (!val || val.startsWith('•••')) {
-          alert('Please enter a valid GitHub Personal Access Token (PAT).');
-          return;
-        }
-        ghToken = val;
-        localStorage.setItem('mvr_github_token', val);
-        alert('GitHub Token saved successfully!');
-        updateGhUI();
-        fetchGithubGallery().then(renderGalleryPreview);
-      });
+    // Hide GitHub-specific UI elements since we now use the backend
+    if (ghTokenInput) ghTokenInput.closest?.('.gh-token-row')?.remove?.();
+    if (btnConnectGh) btnConnectGh.style.display = 'none';
+    if (btnDisconnectGh) btnDisconnectGh.style.display = 'none';
+    if (syncToGithubCheck) {
+      const syncRow = syncToGithubCheck.closest?.('label') || syncToGithubCheck.parentElement;
+      if (syncRow) syncRow.style.display = 'none';
     }
 
-    if (btnDisconnectGh) {
-      btnDisconnectGh.addEventListener('click', () => {
-        if (confirm('Disconnect GitHub account?')) {
-          ghToken = '';
-          githubItems = [];
-          localStorage.removeItem('mvr_github_token');
-          updateGhUI();
-          renderGalleryPreview();
-        }
-      });
-    }
+    // ── Gallery data from backend ──
+    let serverGalleryItems = [];
 
-    updateGhUI();
-
-    function getGallery() {
+    async function fetchServerGallery(category) {
       try {
-        return JSON.parse(localStorage.getItem('mvr_gallery') || '[]');
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveGallery(items) {
-      try {
-        localStorage.setItem('mvr_gallery', JSON.stringify(items));
-      } catch (e) {
-        alert('Storage quota limit reached! Base64 file storage exceeds browser limits. Try removing some old uploaded photos or uploading smaller compressed files.');
-      }
-    }
-
-    // Fetch public gallery database file from the GitHub repository
-    async function fetchGithubGallery() {
-      if (!ghToken) return;
-      try {
-        const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json?t=${Date.now()}`;
-        const dbGetResp = await fetch(dbUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': `token ${ghToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        if (dbGetResp.ok) {
-          const dbGetData = await dbGetResp.json();
-          const decoded = atob(dbGetData.content.replace(/\s/g, ''));
-          const dbContentObj = JSON.parse(decoded);
-          githubItems = dbContentObj.gallery || [];
+        const url = category && category !== 'all' ? `/api/gallery?category=${category}` : '/api/gallery';
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const data = await resp.json();
+          serverGalleryItems = data.gallery || [];
         }
       } catch (err) {
-        console.error('Error fetching gallery DB from GitHub:', err);
+        console.error('Error fetching gallery from server:', err);
+        serverGalleryItems = [];
       }
-    }
-
-    function resolveMediaSrc(src) {
-      if (src && src.startsWith('uploads/')) {
-        return 'https://raw.githubusercontent.com/babu7171/MVR_studio/main/' + src;
-      }
-      return src;
     }
 
     function renderGalleryPreview() {
-      const fullList = ghToken && syncToGithubCheck && syncToGithubCheck.checked ? githubItems : getGallery();
-      let displayItems = [...fullList];
-
       const selectedFilter = adminFilterCategorySelect ? adminFilterCategorySelect.value : 'all';
+      let displayItems = [...serverGalleryItems];
+
       if (selectedFilter !== 'all') {
         displayItems = displayItems.filter(item => item.category === selectedFilter);
       }
@@ -517,264 +446,74 @@
       if (displayItems.length === 0) {
         previewContainer.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(255,255,255,0.01); border: 1px dashed rgba(255,255,255,0.08); border-radius: var(--r2); color: var(--g3); font-size: 0.85rem;">
-            No uploaded items found under this filter category.
+            No uploaded items found. Upload your first photo above!
           </div>
         `;
-        if (typeof updateDeleteSelectedButton === 'function') {
-          updateDeleteSelectedButton();
-        }
+        updateDeleteSelectedButton();
         return;
       }
 
       previewContainer.innerHTML = displayItems.map((item) => {
-        const originalIndex = fullList.findIndex(x => x.src === item.src);
-        const resolvedSrc = resolveMediaSrc(item.src);
         const mediaHTML = item.type === 'video'
-          ? `<video src="${resolvedSrc}" muted playsinline preload="metadata"></video>`
-          : `<img src="${resolvedSrc}" alt="${item.cap || ''}"/>`;
-
-        const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
-        const badgeText = isSync ? 'Live Sync' : 'Local';
-        const badgeColor = isSync ? 'var(--gold)' : '#ff5252';
+          ? `<video src="${item.src}" muted playsinline preload="metadata"></video>`
+          : `<img src="${item.src}" alt="${item.cap || ''}"/>`;
 
         return `
           <div class="admin-gal-card" style="position: relative;">
             ${mediaHTML}
-            <input type="checkbox" class="admin-gal-select-checkbox" data-index="${originalIndex}" style="position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"/>
-            <button onclick="window.deleteGalleryItem(${originalIndex})" class="admin-gal-del" title="Remove Item">✕</button>
+            <input type="checkbox" class="admin-gal-select-checkbox" data-id="${item.id}" style="position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"/>
+            <button onclick="window.deleteGalleryItem(${item.id})" class="admin-gal-del" title="Remove Item">✕</button>
             <div class="admin-gal-info" style="display:flex; justify-content:space-between; align-items:center; gap:5px; bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85));">
               <span style="overflow:hidden; text-overflow:ellipsis; max-width: 65%;">${item.cap || 'MVR Work'}</span>
-              <span style="font-size: 0.58rem; padding: 1px 4px; border-radius: 4px; border: 1px solid ${badgeColor}; color: ${badgeColor}; font-weight:700;">${badgeText}</span>
+              <span style="font-size: 0.58rem; padding: 1px 4px; border-radius: 4px; border: 1px solid var(--gold); color: var(--gold); font-weight:700;">Server</span>
             </div>
           </div>
         `;
       }).join('');
 
-      if (typeof updateDeleteSelectedButton === 'function') {
-        updateDeleteSelectedButton();
-      }
+      updateDeleteSelectedButton();
+
+      // Re-attach checkbox listeners
+      previewContainer.querySelectorAll('.admin-gal-select-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateDeleteSelectedButton);
+      });
     }
 
-    // Direct upload of a single file's content to GitHub (no database update)
-    async function uploadFileContentToGithub(file, repoFilePath, fileType, caption) {
-      const base64Data = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const parts = reader.result.split(',');
-          resolve(parts[1]);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+    // ── Delete single item ──
+    window.deleteGalleryItem = async function(itemId) {
+      if (!confirm('Are you sure you want to delete this gallery item?')) return;
+      try {
+        if (uploadProg) uploadProg.style.display = 'flex';
+        if (upFill) upFill.style.width = '50%';
+        if (upLabel) upLabel.textContent = 'Deleting...';
 
-      const fileUploadUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${repoFilePath}`;
-      const fileUploadBody = {
-        message: `Upload ${fileType} via Admin: ${caption}`,
-        content: base64Data,
-        branch: 'main'
-      };
+        const resp = await fetch(`/api/gallery/${itemId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + jwtToken }
+        });
 
-      const fileResp = await fetch(fileUploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${ghToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(fileUploadBody)
-      });
-
-      if (!fileResp.ok) {
-        const errJson = await fileResp.json().catch(() => ({}));
-        throw new Error(errJson.message || `File upload failed with status ${fileResp.status}`);
-      }
-    }
-
-    // Batch update gallery_db.json with multiple new items in a single commit
-    async function updateGalleryDbWithNewItems(newItems) {
-      if (!newItems || newItems.length === 0) return;
-
-      const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
-      let dbSha = '';
-      let dbContentObj = { gallery: [] };
-
-      const dbGetResp = await fetch(dbUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `token ${ghToken}`,
-          'Accept': 'application/vnd.github.v3+json'
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error || 'Delete failed');
         }
-      });
 
-      if (dbGetResp.ok) {
-        const dbGetData = await dbGetResp.json();
-        dbSha = dbGetData.sha;
-        try {
-          const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
-          dbContentObj = JSON.parse(decoded);
-          if (!dbContentObj.gallery) dbContentObj.gallery = [];
-        } catch (e) {
-          console.error('Failed to parse existing gallery_db.json, starting fresh', e);
-        }
-      }
+        await fetchServerGallery();
+        renderGalleryPreview();
 
-      // Prepend all new items to the gallery array
-      newItems.forEach(item => {
-        dbContentObj.gallery.unshift(item);
-      });
-
-      const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
-
-      const dbUpdateBody = {
-        message: `Update gallery_db.json with ${newItems.length} new items`,
-        content: updatedDbBase64,
-        branch: 'main'
-      };
-      if (dbSha) {
-        dbUpdateBody.sha = dbSha;
-      }
-
-      const dbPutResp = await fetch(dbUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${ghToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dbUpdateBody)
-      });
-
-      if (!dbPutResp.ok) {
-        const errJson = await dbPutResp.json().catch(() => ({}));
-        throw new Error(errJson.message || `Database update failed with status ${dbPutResp.status}`);
-      }
-    }
-
-    // Delete photo/video metadata entry from GitHub repository
-    async function deleteGalleryItemFromGithub(index) {
-      if (!ghToken) return;
-      const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
-      const dbGetResp = await fetch(dbUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `token ${ghToken}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-      if (!dbGetResp.ok) return;
-      const dbGetData = await dbGetResp.json();
-      const dbSha = dbGetData.sha;
-      const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
-      const dbContentObj = JSON.parse(decoded);
-      if (!dbContentObj.gallery) dbContentObj.gallery = [];
-
-      dbContentObj.gallery.splice(index, 1);
-
-      const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
-      const dbUpdateBody = {
-        message: `Delete item index ${index} from gallery_db.json`,
-        content: updatedDbBase64,
-        branch: 'main',
-        sha: dbSha
-      };
-
-      const dbPutResp = await fetch(dbUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${ghToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dbUpdateBody)
-      });
-
-      if (!dbPutResp.ok) {
-        const errJson = await dbPutResp.json().catch(() => ({}));
-        throw new Error(errJson.message || `Failed to update DB after deletion: ${errJson.message}`);
-      }
-    }
-
-    // Batch delete multiple gallery items by index from GitHub
-    async function deleteMultipleGalleryItemsFromGithub(indices) {
-      if (!ghToken || !indices || indices.length === 0) return;
-
-      const dbUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/gallery_db.json`;
-      const dbGetResp = await fetch(dbUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `token ${ghToken}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-
-      if (!dbGetResp.ok) return;
-      const dbGetData = await dbGetResp.json();
-      const dbSha = dbGetData.sha;
-      const decoded = decodeURIComponent(escape(atob(dbGetData.content.replace(/\s/g, ''))));
-      const dbContentObj = JSON.parse(decoded);
-      if (!dbContentObj.gallery) dbContentObj.gallery = [];
-
-      // Sort indices in descending order to splice without shifting remaining indices
-      const sortedIndices = [...indices].sort((a, b) => b - a);
-      sortedIndices.forEach(idx => {
-        dbContentObj.gallery.splice(idx, 1);
-      });
-
-      const updatedDbBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbContentObj, null, 2))));
-      const dbUpdateBody = {
-        message: `Batch delete ${indices.length} items from gallery_db.json`,
-        content: updatedDbBase64,
-        branch: 'main',
-        sha: dbSha
-      };
-
-      const dbPutResp = await fetch(dbUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${ghToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dbUpdateBody)
-      });
-
-      if (!dbPutResp.ok) {
-        const errJson = await dbPutResp.json().catch(() => ({}));
-        throw new Error(errJson.message || `Failed to update DB after batch deletion`);
-      }
-    }
-
-    // Global delete gallery handler
-    window.deleteGalleryItem = async function(index) {
-      const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
-      const targetStr = isSync ? "GitHub repository (Live Site)" : "local browser storage";
-      if (confirm(`Are you sure you want to delete this gallery item from ${targetStr}?`)) {
-        try {
-          if (isSync) {
-            if (uploadProg) uploadProg.style.display = 'flex';
-            if (upFill) upFill.style.width = '50%';
-            if (upLabel) upLabel.textContent = 'Deleting from GitHub...';
-
-            await deleteGalleryItemFromGithub(index);
-            await fetchGithubGallery();
-
-            if (uploadProg) uploadProg.style.display = 'none';
-            if (upFill) upFill.style.width = '0%';
-          } else {
-            const items = getGallery();
-            items.splice(index, 1);
-            saveGallery(items);
-          }
-          renderGalleryPreview();
-        } catch (err) {
-          console.error(err);
-          alert('Delete failed: ' + err.message);
+        if (upFill) upFill.style.width = '100%';
+        if (upLabel) upLabel.textContent = 'Deleted successfully!';
+        setTimeout(() => {
           if (uploadProg) uploadProg.style.display = 'none';
-        }
+          if (upFill) upFill.style.width = '0%';
+        }, 800);
+      } catch (err) {
+        console.error(err);
+        alert('Delete failed: ' + err.message);
+        if (uploadProg) uploadProg.style.display = 'none';
       }
     };
 
-    // Drag and drop event listeners
+    // ── Drag and drop ──
     if (dropZone) {
       ['dragenter', 'dragover'].forEach(ev => {
         dropZone.addEventListener(ev, e => {
@@ -803,216 +542,48 @@
       });
     }
 
-    if (syncToGithubCheck) {
-      syncToGithubCheck.addEventListener('change', () => {
-        if (syncToGithubCheck.checked && ghToken && githubItems.length === 0) {
-          if (uploadProg) uploadProg.style.display = 'flex';
-          if (upLabel) upLabel.textContent = 'Loading live items...';
-          fetchGithubGallery().then(() => {
-            if (uploadProg) uploadProg.style.display = 'none';
-            renderGalleryPreview();
-          });
-        } else {
-          renderGalleryPreview();
-        }
-      });
-    }
-
-    function detectFileDetails(file) {
-      return new Promise((resolve) => {
-        // If type is already recognized by the browser, use it
-        if (file.type && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
-          let ext = '';
-          const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
-          if (match) {
-            ext = '.' + match[1].toLowerCase();
-          } else {
-            if (file.type.includes('png')) ext = '.png';
-            else if (file.type.includes('webp')) ext = '.webp';
-            else if (file.type.includes('gif')) ext = '.gif';
-            else if (file.type.includes('mp4')) ext = '.mp4';
-            else if (file.type.includes('quicktime')) ext = '.mov';
-            else ext = '.jpg';
-          }
-          resolve({
-            file: file,
-            mime: file.type,
-            type: file.type.startsWith('video/') ? 'video' : 'photo',
-            ext: ext,
-            isValid: true
-          });
-          return;
-        }
-
-        // Check if filename has a known media extension
-        const knownExtensions = {
-          'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp', 'gif': 'image/gif',
-          'mp4': 'video/mp4', 'mov': 'video/quicktime', 'mkv': 'video/x-matroska', 'avi': 'video/x-msvideo'
-        };
-        const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
-        if (match) {
-          const extStr = match[1].toLowerCase();
-          if (knownExtensions[extStr]) {
-            const mime = knownExtensions[extStr];
-            resolve({
-              file: file,
-              mime: mime,
-              type: mime.startsWith('video/') ? 'video' : 'photo',
-              ext: '.' + extStr,
-              isValid: true
-            });
-            return;
-          }
-        }
-
-        // For extensionless or unrecognized files, read magic bytes
-        const blob = file.slice(0, 16);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (!e.target || !e.target.result) {
-            resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
-            return;
-          }
-          const arr = new Uint8Array(e.target.result);
-          let header = '';
-          for (let i = 0; i < Math.min(arr.length, 12); i++) {
-            header += arr[i].toString(16).padStart(2, '0').toUpperCase();
-          }
-
-          if (header.startsWith('89504E47')) {
-            resolve({ file: file, mime: 'image/png', type: 'photo', ext: '.png', isValid: true });
-          } else if (header.startsWith('FFD8FF')) {
-            resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
-          } else if (header.startsWith('47494638')) {
-            resolve({ file: file, mime: 'image/gif', type: 'photo', ext: '.gif', isValid: true });
-          } else if (header.startsWith('52494646') && header.slice(16, 24) === '57454250') {
-            resolve({ file: file, mime: 'image/webp', type: 'photo', ext: '.webp', isValid: true });
-          } else if (header.slice(8, 16) === '66747970') {
-            resolve({ file: file, mime: 'video/mp4', type: 'video', ext: '.mp4', isValid: true });
-          } else {
-            resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
-          }
-        };
-        reader.onerror = () => {
-          resolve({ file: file, mime: 'image/jpeg', type: 'photo', ext: '.jpg', isValid: true });
-        };
-        reader.readAsArrayBuffer(blob);
-      });
-    }
-
+    // ── File Upload to backend via multipart form data ──
     async function handleUploadFiles(files) {
       if (!files || !files.length) return;
 
       if (uploadProg) uploadProg.style.display = 'flex';
-      if (upLabel) upLabel.textContent = 'Analyzing files...';
+      if (upLabel) upLabel.textContent = `Uploading ${files.length} file(s) to server...`;
+      if (upFill) upFill.style.width = '30%';
 
-      const analyzedFiles = [];
-      for (const file of Array.from(files)) {
-        const details = await detectFileDetails(file);
-        if (details.isValid) {
-          analyzedFiles.push(details);
-        }
-      }
+      const formData = new FormData();
+      const caption = uploadCaptionInput ? uploadCaptionInput.value.trim() : '';
+      const category = uploadCategorySelect ? uploadCategorySelect.value : 'wedding';
 
-      if (!analyzedFiles.length) {
-        alert('Please upload valid image files (JPG, PNG, WEBP, GIF) or video files (MP4, MOV).');
-        if (uploadProg) uploadProg.style.display = 'none';
-        return;
-      }
+      Array.from(files).forEach(file => formData.append('files', file));
+      if (caption) formData.append('caption', caption);
+      formData.append('category', category);
 
-      let done = 0;
-      const customCaption = uploadCaptionInput ? uploadCaptionInput.value.trim() : '';
-      const customCategory = uploadCategorySelect ? uploadCategorySelect.value : 'all';
-      const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
+      try {
+        if (upFill) upFill.style.width = '60%';
+        const resp = await fetch('/api/gallery', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + jwtToken },
+          body: formData  // Note: no Content-Type header for multipart!
+        });
 
-      if (isSync) {
-        const newItemsToRegister = [];
-        for (const item of analyzedFiles) {
-          try {
-            const file = item.file;
-            const caption = customCaption || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-            
-            const timestamp = Math.floor(Date.now() / 1000);
-            let cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-            const fileExt = item.ext;
-            if (fileExt && !cleanName.toLowerCase().endsWith(fileExt.toLowerCase())) {
-              cleanName += fileExt;
-            }
-            const filename = `${timestamp}-${cleanName}`;
-            const repoFilePath = `uploads/${filename}`;
+        const result = await resp.json();
+        if (!resp.ok) throw new Error(result.error || 'Upload failed');
 
-            if (upLabel) upLabel.textContent = `Uploading ${file.name} to GitHub...`;
-            
-            // Upload only file content first
-            await uploadFileContentToGithub(file, repoFilePath, item.type, caption);
+        if (upFill) upFill.style.width = '100%';
+        if (upLabel) upLabel.textContent = `✅ Uploaded ${result.uploaded} file(s) successfully!`;
 
-            // Register metadata
-            newItemsToRegister.push({
-              src: repoFilePath,
-              type: item.type,
-              cap: caption,
-              category: customCategory,
-              uploadedAt: new Date().toISOString().split('T')[0]
-            });
-
-            done++;
-            const pct = Math.round((done / analyzedFiles.length) * 90); // 90% for file uploads
-            if (upFill) upFill.style.width = pct + '%';
-            if (upLabel) upLabel.textContent = `Uploaded ${done} / ${analyzedFiles.length} files`;
-          } catch (err) {
-            console.error('GitHub Upload Error for file ' + item.file.name, err);
-            alert(`Failed to upload ${item.file.name} to GitHub: ${err.message}`);
-          }
-        }
-
-        if (newItemsToRegister.length > 0) {
-          try {
-            if (upLabel) upLabel.textContent = `Saving database settings (gallery_db.json)...`;
-            await updateGalleryDbWithNewItems(newItemsToRegister);
-            if (upFill) upFill.style.width = '100%';
-            if (upLabel) upLabel.textContent = `All uploads completed and saved successfully!`;
-          } catch (err) {
-            console.error('GitHub DB Update Error', err);
-            alert(`Failed to update database on GitHub: ${err.message}`);
-          }
-        }
-
-        await fetchGithubGallery();
+        await fetchServerGallery();
+        renderGalleryPreview();
+        if (uploadCaptionInput) uploadCaptionInput.value = '';
 
         setTimeout(() => {
           if (uploadProg) uploadProg.style.display = 'none';
           if (upFill) upFill.style.width = '0%';
         }, 1500);
-
-        renderGalleryPreview();
-        if (uploadCaptionInput) uploadCaptionInput.value = '';
-      } else {
-        const items = getGallery();
-        analyzedFiles.forEach(item => {
-          const file = item.file;
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const url = ev.target.result;
-            const caption = customCaption || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-            items.unshift({ src: url, type: item.type, cap: caption, category: customCategory, isNew: true });
-            done++;
-
-            const pct = Math.round((done / analyzedFiles.length) * 100);
-            if (upFill) upFill.style.width = pct + '%';
-            if (upLabel) upLabel.textContent = `Processing ${done} / ${analyzedFiles.length}`;
-
-            if (done === analyzedFiles.length) {
-              saveGallery(items);
-              setTimeout(() => {
-                if (uploadProg) uploadProg.style.display = 'none';
-                if (upFill) upFill.style.width = '0%';
-              }, 800);
-              renderGalleryPreview();
-              if (uploadCaptionInput) uploadCaptionInput.value = '';
-            }
-          };
-          reader.readAsDataURL(file);
-        });
+      } catch (err) {
+        console.error('Upload error:', err);
+        alert('Upload failed: ' + err.message);
+        if (uploadProg) uploadProg.style.display = 'none';
       }
     }
 
@@ -1020,87 +591,52 @@
       adminFilterCategorySelect.addEventListener('change', renderGalleryPreview);
     }
 
-    // Initial load
-    if (ghToken) {
-      if (uploadProg) uploadProg.style.display = 'flex';
-      if (upLabel) upLabel.textContent = 'Loading live items...';
-      fetchGithubGallery().then(() => {
-        if (uploadProg) uploadProg.style.display = 'none';
-        renderGalleryPreview();
-      });
-    } else {
-      renderGalleryPreview();
-    }
-
-    const btnClearLocalCache = document.getElementById('btnClearLocalCache');
-    if (btnClearLocalCache) {
-      btnClearLocalCache.addEventListener('click', () => {
-        if (confirm("Are you sure you want to clear all local uploads from this browser's cache? (This will NOT affect the live files on GitHub)")) {
-          try {
-            localStorage.removeItem('mvr_gallery');
-            alert('Browser cache uploads cleared successfully!');
-            location.reload();
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      });
-    }
-
-    // Delegation listener for checkboxes inside the gallery preview
-    if (previewContainer) {
-      previewContainer.addEventListener('change', (e) => {
-        if (e.target && e.target.classList.contains('admin-gal-select-checkbox')) {
-          updateDeleteSelectedButton();
-        }
-      });
-    }
-
-    // Click listener for batch delete button
+    // ── Batch delete button ──
     if (btnDeleteSelected) {
       btnDeleteSelected.addEventListener('click', async () => {
         const checkedBoxes = previewContainer.querySelectorAll('.admin-gal-select-checkbox:checked');
         const count = checkedBoxes.length;
         if (count === 0) return;
 
-        const isSync = ghToken && syncToGithubCheck && syncToGithubCheck.checked;
-        const targetStr = isSync ? "GitHub repository (Live Site)" : "local browser storage";
+        if (!confirm(`Delete ${count} selected gallery items from the server?`)) return;
 
-        if (confirm(`Are you sure you want to delete the ${count} selected gallery items from ${targetStr}?`)) {
-          const indicesToDelete = [];
-          checkedBoxes.forEach(cb => {
-            const idx = parseInt(cb.dataset.index, 10);
-            if (!isNaN(idx)) {
-              indicesToDelete.push(idx);
-            }
+        const idsToDelete = [];
+        checkedBoxes.forEach(cb => {
+          const id = parseInt(cb.dataset.id, 10);
+          if (!isNaN(id)) idsToDelete.push(id);
+        });
+
+        try {
+          if (uploadProg) uploadProg.style.display = 'flex';
+          if (upFill) upFill.style.width = '50%';
+          if (upLabel) upLabel.textContent = `Deleting ${count} items...`;
+
+          const resp = await fetch('/api/gallery/batch', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + jwtToken
+            },
+            body: JSON.stringify({ ids: idsToDelete })
           });
 
-          try {
-            if (isSync) {
-              if (uploadProg) uploadProg.style.display = 'flex';
-              if (upFill) upFill.style.width = '50%';
-              if (upLabel) upLabel.textContent = `Deleting ${count} items from GitHub...`;
+          const result = await resp.json();
+          if (!resp.ok) throw new Error(result.error || 'Batch delete failed');
 
-              await deleteMultipleGalleryItemsFromGithub(indicesToDelete);
-              await fetchGithubGallery();
+          if (upFill) upFill.style.width = '100%';
+          if (upLabel) upLabel.textContent = `✅ Deleted ${result.deleted} items!`;
 
-              if (uploadProg) uploadProg.style.display = 'none';
-              if (upFill) upFill.style.width = '0%';
-            } else {
-              const items = getGallery();
-              const sortedIndices = [...indicesToDelete].sort((a, b) => b - a);
-              sortedIndices.forEach(idx => {
-                items.splice(idx, 1);
-              });
-              saveGallery(items);
-            }
-            renderGalleryPreview();
-            alert(`Successfully deleted ${count} items!`);
-          } catch (err) {
-            console.error(err);
-            alert('Delete failed: ' + err.message);
+          await fetchServerGallery();
+          renderGalleryPreview();
+
+          setTimeout(() => {
             if (uploadProg) uploadProg.style.display = 'none';
-          }
+            if (upFill) upFill.style.width = '0%';
+          }, 1000);
+        } catch (err) {
+          console.error(err);
+          alert('Batch delete failed: ' + err.message);
+          if (uploadProg) uploadProg.style.display = 'none';
         }
       });
     }

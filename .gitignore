@@ -3,3 +3,14 @@ database.db
 .env
 public/uploads/*
 !public/uploads/.gitkeep
+
+# Backend server files
+server/node_modules/
+server/.env
+server/mvr_studio.db
+server/mvr_studio.db-journal
+server/mvr_studio.db-shm
+server/mvr_studio.db-wal
+server/uploads/*
+!server/uploads/.gitkeep
+

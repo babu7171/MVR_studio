@@ -459,67 +459,50 @@
     });
   }
 
-  // Load custom saved items from localStorage (uploaded locally by admin)
-  // Load custom saved items from localStorage (local test) + gallery_db.json (GitHub)
+  // Load gallery items and services from the backend API server
   async function loadCustomGallery() {
-
-
-    // 2. Fetch live items from gallery_db.json
     try {
-      const token = localStorage.getItem('mvr_github_token') || '';
-      let dbResp;
-      if (token) {
-        try {
-          dbResp = await fetch('https://api.github.com/repos/babu7171/MVR_studio/contents/gallery_db.json?t=' + Date.now(), {
-            headers: {
-              'Authorization': `token ${token}`,
-              'Accept': 'application/vnd.github.v3.raw'
-            }
-          });
-        } catch (e) {
-          console.warn('Authenticated API fetch failed, falling back to public CDN', e);
+      // Fetch services and gallery from backend API
+      const [servicesResp, galleryResp] = await Promise.all([
+        fetch('/api/services'),
+        fetch('/api/gallery')
+      ]);
+
+      if (servicesResp.ok) {
+        const data = await servicesResp.json();
+        if (data.services && typeof window.initDynamicServices === 'function') {
+          window.initDynamicServices(data.services);
+        }
+        if (data.budgets) {
+          window.customBudgetsDb = data.budgets;
         }
       }
-      if (!dbResp || !dbResp.ok) {
-        dbResp = await fetch('https://raw.githubusercontent.com/babu7171/MVR_studio/main/gallery_db.json?t=' + Date.now());
-      }
 
-      if (dbResp.ok) {
-        const data = await dbResp.json();
-        if (data) {
-          if (data.budgets) {
-            window.customBudgetsDb = data.budgets;
-          }
-          if (Array.isArray(data.services) && typeof window.initDynamicServices === 'function') {
-            window.initDynamicServices(data.services);
-          }
-          if (Array.isArray(data.gallery)) {
-            // Store in a global variable for index.html's openGallery to access
-            window.customGalleryDb = data.gallery;
-
-            data.gallery.forEach(item => {
-              // Check if already loaded to avoid duplicates
-              if (!galleryItems.some(existing => existing.src === item.src)) {
-                // Prepend live public items
-                galleryItems.unshift({
-                  src: item.src,
-                  type: item.type || 'photo',
-                  cap: item.cap || 'MVR Work',
-                  category: item.category || 'all',
-                  isNew: true
-                });
-              }
-            });
-          }
+      if (galleryResp.ok) {
+        const data = await galleryResp.json();
+        if (Array.isArray(data.gallery)) {
+          window.customGalleryDb = data.gallery;
+          data.gallery.forEach(item => {
+            if (!galleryItems.some(existing => existing.src === item.src)) {
+              galleryItems.unshift({
+                src: item.src,
+                type: item.type || 'photo',
+                cap: item.cap || 'MVR Work',
+                category: item.category || 'all',
+                isNew: true
+              });
+            }
+          });
         }
       }
     } catch (err) {
-      console.warn('Could not fetch public gallery_db.json, showing local items only');
+      console.warn('Could not connect to backend API, showing static items only:', err.message);
     }
 
-    // 3. Re-apply filter and rebuild lightbox after loading items
+    // Re-apply filter and rebuild lightbox after loading
     applyFilter(activeFilter);
   }
+
 
   /* ══════════════════════════════════════════════════
      GALLERY FILTER
