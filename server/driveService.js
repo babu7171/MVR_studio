@@ -17,15 +17,20 @@ function getDriveClient() {
     }
     try {
       const credentials = JSON.parse(credentialsJson);
-      const auth = new google.auth.JWT(
-        credentials.client_email,
-        null,
-        credentials.private_key,
-        ['https://www.googleapis.com/auth/drive']
-      );
+      
+      const privateKey = credentials.private_key
+        ? credentials.private_key.replace(/\\n/g, '\n')
+        : null;
+
+      const auth = new google.auth.JWT({
+        email: credentials.client_email,
+        key: privateKey,
+        scopes: ['https://www.googleapis.com/auth/drive']
+      });
+
       driveClient = google.drive({ version: 'v3', auth });
     } catch (err) {
-      throw new Error(`Failed to parse GOOGLE_DRIVE_CREDENTIALS: ${err.message}`);
+      throw new Error(`Failed to initialize Google Drive client: ${err.message}`);
     }
   }
   return driveClient;
