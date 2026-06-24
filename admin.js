@@ -45,6 +45,12 @@
     } else {
       if (loginSection) loginSection.style.display = 'flex';
       if (dashboardSection) dashboardSection.style.display = 'none';
+      
+      // Stop background polling on logout
+      if (pollIntervalId) {
+        clearInterval(pollIntervalId);
+        pollIntervalId = null;
+      }
     }
   }
 
@@ -107,6 +113,13 @@
     initStatsEditor();
     initGalleryManager();
     initBudgetsManager();
+
+    // Start background polling for new bookings every 10 seconds
+    if (!pollIntervalId) {
+      pollIntervalId = setInterval(() => {
+        renderBookings(true);
+      }, 10000);
+    }
   }
 
   // Tab toggling
@@ -147,12 +160,28 @@
     }
   }
 
+  let lastKnownEnquiryIds = [];
+  let pollIntervalId = null;
+
   // ── Bookings Tab Logic ──
-  async function renderBookings() {
+  async function renderBookings(isBackgroundPoll = false) {
     const container = document.getElementById('adminBookingsContainer');
     if (!container) return;
 
     const enquiries = await fetchServerEnquiries();
+
+    // If it's a background poll and we have new bookings, show floating toasts
+    if (isBackgroundPoll && lastKnownEnquiryIds.length > 0 && enquiries.length > 0) {
+      const newBookings = enquiries.filter(e => !lastKnownEnquiryIds.includes(e.id));
+      if (newBookings.length > 0) {
+        newBookings.forEach(booking => {
+          showNewBookingToast(booking);
+        });
+      }
+    }
+
+    // Keep track of all known booking IDs
+    lastKnownEnquiryIds = enquiries.map(e => e.id);
 
     if (enquiries.length === 0) {
       container.innerHTML = `
@@ -265,6 +294,124 @@
         </div>
       `;
     }).join('');
+  }
+
+  // Show a premium floating toast notification for new bookings
+  function showNewBookingToast(booking) {
+    // 1. Create a sound notification
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.15);
+      
+      setTimeout(() => {
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+        gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc2.start();
+        osc2.stop(audioCtx.currentTime + 0.25);
+      }, 150);
+    } catch (e) {
+      console.warn('Audio Context failed:', e);
+    }
+
+    // Inject CSS animations if they don't exist
+    if (!document.getElementById('admin-toast-styles')) {
+      const styles = document.createElement('style');
+      styles.id = 'admin-toast-styles';
+      styles.textContent = `
+        @keyframes slideInRight {
+          from { transform: translateX(120%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+
+    // 2. Create the toast element
+    const toast = document.createElement('div');
+    toast.className = 'admin-booking-toast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, var(--navy3), #0a1124);
+      border: 1px solid var(--gold);
+      border-radius: var(--r2);
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(201,165,90,0.15);
+      color: var(--white);
+      z-index: 9999;
+      width: 320px;
+      animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+      text-align: left;
+    `;
+
+    toast.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+        <span style="font-size: 1.1rem; display:flex; align-items:center; gap:6px;">🔔 <strong style="color:var(--gold);">New Booking!</strong></span>
+        <button class="toast-close-btn" style="background:transparent; border:none; color:var(--g4); font-size:1.2rem; cursor:pointer; padding:0; line-height:1;">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; margin: 0 0 12px 0; color: var(--g3); line-height: 1.4;">
+        <strong>${booking.name}</strong> just requested a <strong>${booking.service}</strong>.
+      </p>
+      <div style="display:flex; gap: 8px;">
+        <button class="toast-view-btn" style="background:var(--gold); color:var(--navy); border:none; padding:6px 12px; font-size:0.78rem; font-weight:700; border-radius:var(--r1); cursor:pointer;">
+          View Booking
+        </button>
+        <button class="toast-dismiss-btn" style="background:rgba(255,255,255,0.06); color:var(--white); border:1px solid rgba(255,255,255,0.1); padding:6px 12px; font-size:0.78rem; border-radius:var(--r1); cursor:pointer;">
+          Dismiss
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Event listener: close button
+    toast.querySelector('.toast-close-btn').addEventListener('click', () => toast.remove());
+    // Event listener: dismiss button
+    toast.querySelector('.toast-dismiss-btn').addEventListener('click', () => toast.remove());
+
+    // Event listener: view button
+    toast.querySelector('.toast-view-btn').addEventListener('click', () => {
+      const bookingsTab = document.querySelector('[data-tab="bookings"]');
+      if (bookingsTab) bookingsTab.click();
+      
+      const card = document.getElementById(`adminCard-${booking.id}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.borderColor = 'var(--gold)';
+        card.style.boxShadow = '0 0 15px rgba(201,165,90,0.4)';
+        setTimeout(() => {
+          card.style.borderColor = '';
+          card.style.boxShadow = '';
+        }, 3000);
+      }
+      toast.remove();
+    });
+
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.style.animation = 'fadeOut 0.5s var(--ease) both';
+        setTimeout(() => toast.remove(), 500);
+      }
+    }, 10000);
   }
 
   // Global delete booking handler
