@@ -966,7 +966,7 @@
     doc.setFont('Helvetica', 'bold');
     doc.text("MVR Studio Kalyandurg", 15, 54);
     doc.setFont('Helvetica', 'normal');
-    doc.text("9E-65, Hindu Puram Rd, opp. CANARA BANK, Kalyandurg, AP - 515761", 15, 60);
+    doc.text("9E-65, Anantapur road, opp. CANARA BANK, Kalyandurg, AP - 515761", 15, 60);
     doc.text("Phone: +91 96523 41566", 15, 66);
     doc.text("Email: info@mvrstudio.in", 15, 72);
 
