@@ -1,4 +1,4 @@
-// routes/gallery.js — Gallery CRUD with file uploads (using node:sqlite)
+// routes/gallery.js — Gallery CRUD with Google Drive / Local disk fallback support
 'use strict';
 
 const express = require('express');
@@ -7,24 +7,15 @@ const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../database');
 const { requireAuth } = require('../middleware/auth');
+const { uploadFileToDrive, deleteFileFromDrive, extractFileId } = require('../driveService');
 
 const router = express.Router();
 
-// Ensure uploads directory exists
+// Ensure local uploads directory exists (used as fallback)
 const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
-
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    cb(null, `${timestamp}-${safeName}`);
-  }
-});
 
 const fileFilter = (req, file, cb) => {
   const allowed = [
@@ -38,8 +29,9 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// Use memoryStorage so we always have access to file buffers
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
@@ -82,7 +74,7 @@ router.get('/', (req, res) => {
  * POST /api/gallery
  * Upload one or multiple files (admin protected)
  */
-router.post('/', requireAuth, upload.array('files', 20), (req, res) => {
+router.post('/', requireAuth, upload.array('files', 20), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No files uploaded' });
@@ -91,6 +83,7 @@ router.post('/', requireAuth, upload.array('files', 20), (req, res) => {
     const db = getDb();
     const { caption, category } = req.body;
     const insertedItems = [];
+    const hasDrive = !!process.env.GOOGLE_DRIVE_CREDENTIALS;
 
     const insertStmt = db.prepare(
       'INSERT INTO gallery (src, type, cap, category, uploaded_at) VALUES (?, ?, ?, ?, ?)'
@@ -98,7 +91,22 @@ router.post('/', requireAuth, upload.array('files', 20), (req, res) => {
 
     for (const file of req.files) {
       const isVideo = file.mimetype.startsWith('video/');
-      const src = `uploads/${file.filename}`;
+      const timestamp = Date.now();
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `${timestamp}-${safeName}`;
+      
+      let src;
+      if (hasDrive) {
+        // Upload directly to Google Drive
+        const uploadResult = await uploadFileToDrive(file.buffer, fileName, file.mimetype);
+        src = uploadResult.url;
+      } else {
+        // Fallback: save to local server disk
+        const filePath = path.join(UPLOADS_DIR, fileName);
+        fs.writeFileSync(filePath, file.buffer);
+        src = `uploads/${fileName}`;
+      }
+
       const type = isVideo ? 'video' : 'photo';
       const cap = caption || file.originalname.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
       const cat = category || 'wedding';
@@ -108,7 +116,7 @@ router.post('/', requireAuth, upload.array('files', 20), (req, res) => {
       insertedItems.push({ id: result.lastInsertRowid, src, type, cap, category: cat, uploaded_at: uploadedAt });
     }
 
-    console.log(`✅ Uploaded ${req.files.length} file(s) to gallery`);
+    console.log(`✅ Uploaded ${req.files.length} file(s) to gallery (Google Drive: ${hasDrive})`);
     res.json({ success: true, uploaded: insertedItems.length, items: insertedItems });
   } catch (err) {
     console.error('Gallery POST error:', err);
@@ -121,10 +129,11 @@ router.post('/', requireAuth, upload.array('files', 20), (req, res) => {
  * Batch delete by IDs array (admin protected)
  * Body: { ids: [1, 2, 3] }
  */
-router.delete('/batch', requireAuth, (req, res) => {
+router.delete('/batch', requireAuth, async (req, res) => {
   try {
     const db = getDb();
     const { ids } = req.body;
+    const hasDrive = !!process.env.GOOGLE_DRIVE_CREDENTIALS;
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'ids array is required' });
@@ -132,24 +141,35 @@ router.delete('/batch', requireAuth, (req, res) => {
 
     const placeholders = ids.map(() => '?').join(',');
 
-    // Get file paths before deletion
+    // Get file paths/urls before deletion
     const items = db.prepare(`SELECT * FROM gallery WHERE id IN (${placeholders})`).all(...ids);
 
     // Delete from database
     db.prepare(`DELETE FROM gallery WHERE id IN (${placeholders})`).run(...ids);
 
-    // Delete files from disk
     let deletedFiles = 0;
     for (const item of items) {
-      const filename = path.basename(item.src);
-      const filePath = path.join(UPLOADS_DIR, filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        deletedFiles++;
+      const fileId = extractFileId(item.src);
+      if (fileId && hasDrive) {
+        // Delete from Google Drive
+        try {
+          await deleteFileFromDrive(fileId);
+          deletedFiles++;
+        } catch (driveErr) {
+          console.warn(`Failed to delete file ${fileId} from Google Drive:`, driveErr.message);
+        }
+      } else {
+        // Delete from local disk
+        const filename = path.basename(item.src);
+        const filePath = path.join(UPLOADS_DIR, filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          deletedFiles++;
+        }
       }
     }
 
-    console.log(`✅ Batch deleted ${ids.length} gallery items, ${deletedFiles} files from disk`);
+    console.log(`✅ Batch deleted ${ids.length} gallery items, removed ${deletedFiles} files`);
     res.json({ success: true, deleted: ids.length, filesRemoved: deletedFiles });
   } catch (err) {
     console.error('Gallery batch DELETE error:', err);
@@ -161,10 +181,11 @@ router.delete('/batch', requireAuth, (req, res) => {
  * DELETE /api/gallery/:id
  * Delete a single gallery item (admin protected)
  */
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const db = getDb();
     const id = parseInt(req.params.id, 10);
+    const hasDrive = !!process.env.GOOGLE_DRIVE_CREDENTIALS;
 
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid gallery item ID' });
@@ -175,12 +196,24 @@ router.delete('/:id', requireAuth, (req, res) => {
       return res.status(404).json({ error: 'Gallery item not found' });
     }
 
+    // Delete from database
     db.prepare('DELETE FROM gallery WHERE id = ?').run(id);
 
-    const filename = path.basename(item.src);
-    const filePath = path.join(UPLOADS_DIR, filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const fileId = extractFileId(item.src);
+    if (fileId && hasDrive) {
+      // Delete from Google Drive
+      try {
+        await deleteFileFromDrive(fileId);
+      } catch (driveErr) {
+        console.warn(`Failed to delete file ${fileId} from Google Drive:`, driveErr.message);
+      }
+    } else {
+      // Delete from local disk
+      const filename = path.basename(item.src);
+      const filePath = path.join(UPLOADS_DIR, filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
     }
 
     console.log(`✅ Deleted gallery item ${id}`);
