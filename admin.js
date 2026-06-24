@@ -430,11 +430,16 @@
               driveStatusBadge.style.color = '#4caf50';
             }
             if (driveDebugResult) {
+              const accountDetails = data.clientType === 'OAuth2 User'
+                ? `<strong>OAuth2 Client ID:</strong> <code>${data.clientId}</code>`
+                : `<strong>Service Account Email:</strong> <code>${data.clientEmail}</code>`;
+
               driveDebugResult.innerHTML = `
                 <div style="color: #4caf50; font-weight: bold; margin-bottom: 10px;">✅ Connection Successful!</div>
+                <strong>Connection Mode:</strong> ${data.clientType}<br/>
                 <strong>Folder Name:</strong> ${data.folderName}<br/>
                 <strong>Folder ID:</strong> <code>${data.folderId}</code><br/>
-                <strong>Service Account Email:</strong> <code>${data.clientEmail}</code><br/>
+                ${accountDetails}<br/>
                 <div style="margin-top: 10px; color: var(--g3);">Your photos/videos will be uploaded directly to this Google Drive folder.</div>
               `;
             }
@@ -448,28 +453,65 @@
             
             // Helpful troubleshooting advice based on Google error message
             let advice = '';
+            const isOAuth2 = data.clientType === 'OAuth2 User';
+
             if (data.error && data.error.includes('File not found')) {
+              if (isOAuth2) {
+                advice = `
+                  <div style="margin-top: 10px; padding: 12px; background: rgba(255,193,7,0.15); border-left: 4px solid #ffc107; color: #ffc107; border-radius: 4px; line-height: 1.4;">
+                    <strong>💡 How to Fix:</strong><br/>
+                    Google cannot find the folder <code>${data.folderId || '1Wi8mnDm_0uK9HkPFx1t-txly5oMVIZOC'}</code>.<br/>
+                    Please ensure that the folder exists in your personal Google Drive and has not been deleted.
+                  </div>
+                `;
+              } else {
+                advice = `
+                  <div style="margin-top: 10px; padding: 12px; background: rgba(255,193,7,0.15); border-left: 4px solid #ffc107; color: #ffc107; border-radius: 4px; line-height: 1.4;">
+                    <strong>💡 How to Fix:</strong><br/>
+                    Google cannot find the folder <code>${data.folderId || '1Wi8mnDm_0uK9HkPFx1t-txly5oMVIZOC'}</code>. Please share this folder in Google Drive with your Service Account email address as an <strong>Editor</strong>:<br/>
+                    <strong style="color: var(--white); select-all: true;">${data.clientEmail || 'your-service-account-email'}</strong>
+                  </div>
+                `;
+              }
+            } else if (data.error && data.error.includes('invalid_grant')) {
+              if (isOAuth2) {
+                advice = `
+                  <div style="margin-top: 10px; padding: 12px; background: rgba(255,82,82,0.15); border-left: 4px solid #ff5252; color: #ff5252; border-radius: 4px; line-height: 1.4;">
+                    <strong>💡 How to Fix:</strong><br/>
+                    Your Google Refresh Token is invalid or has expired/been revoked. Please re-authorize your account:<br/>
+                    1. Open a new tab and visit: <a href="/api/auth/google" target="_blank" style="color: var(--gold); font-weight: bold; text-decoration: underline;">mvr-studio.onrender.com/api/auth/google</a><br/>
+                    2. Complete the Google login and copy the newly generated <strong>Refresh Token</strong>.<br/>
+                    3. Update the <code>GOOGLE_REFRESH_TOKEN</code> environment variable in your Render.com settings, and wait for Render to redeploy.
+                  </div>
+                `;
+              } else {
+                advice = `
+                  <div style="margin-top: 10px; padding: 12px; background: rgba(255,82,82,0.15); border-left: 4px solid #ff5252; color: #ff5252; border-radius: 4px; line-height: 1.4;">
+                    <strong>💡 How to Fix:</strong><br/>
+                    The private key or service account details in your <code>GOOGLE_DRIVE_CREDENTIALS</code> environment variable on Render are invalid. Please check your credentials JSON and copy-paste it again.
+                  </div>
+                `;
+              }
+            } else if (isOAuth2) {
               advice = `
                 <div style="margin-top: 10px; padding: 12px; background: rgba(255,193,7,0.15); border-left: 4px solid #ffc107; color: #ffc107; border-radius: 4px; line-height: 1.4;">
                   <strong>💡 How to Fix:</strong><br/>
-                  Google cannot find the folder <code>${data.folderId || '1Wi8mnDm_0uK9HkPFx1t-txly5oMVIZOC'}</code>. Please share this folder in Google Drive with your Service Account email address as an <strong>Editor</strong>:<br/>
-                  <strong style="color: var(--white); select-all: true;">${data.clientEmail || 'your-service-account-email'}</strong>
-                </div>
-              `;
-            } else if (data.error && data.error.includes('invalid_grant')) {
-              advice = `
-                <div style="margin-top: 10px; padding: 12px; background: rgba(255,82,82,0.15); border-left: 4px solid #ff5252; color: #ff5252; border-radius: 4px; line-height: 1.4;">
-                  <strong>💡 How to Fix:</strong><br/>
-                  The private key or service account details in your <code>GOOGLE_DRIVE_CREDENTIALS</code> environment variable on Render are invalid. Please check your credentials JSON and copy-paste it again.
+                  1. Make sure your Google Cloud App is in 'Testing' status and your Gmail address is added to the <strong>Test Users</strong> list on the OAuth Consent Screen in your Google Cloud Console.<br/>
+                  2. Double check that your <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> match exactly.
                 </div>
               `;
             }
 
             if (driveDebugResult) {
+              const accountDetails = data.clientType === 'OAuth2 User'
+                ? `<strong>OAuth2 Client ID:</strong> <code>${data.clientId || 'Not loaded'}</code>`
+                : `<strong>Service Account Email:</strong> <code>${data.clientEmail || 'Not loaded'}</code>`;
+
               driveDebugResult.innerHTML = `
                 <div style="color: #ff5252; font-weight: bold; margin-bottom: 10px;">❌ Connection Failed!</div>
-                <strong>Service Account Email:</strong> <code>${data.clientEmail || 'Not loaded'}</code><br/>
+                <strong>Connection Mode:</strong> ${data.clientType || 'Unknown'}<br/>
                 <strong>Folder ID:</strong> <code>${data.folderId || 'Not loaded'}</code><br/>
+                ${accountDetails}<br/>
                 <strong>Error Details:</strong> <span style="color: #ff5252;">${data.error || 'Unknown error'}</span>
                 ${advice}
               `;
