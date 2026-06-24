@@ -63,6 +63,45 @@ router.get('/status/:id', (req, res) => {
 });
 
 /**
+ * GET /api/enquiries/status-by-phone/:phone
+ * Retrieve status of the latest enquiry for a specific phone number (public)
+ */
+router.get('/status-by-phone/:phone', (req, res) => {
+  try {
+    const db = getDb();
+    const phone = req.params.phone.trim();
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    // Clean phone number to extract digits
+    const cleanPhone = phone.replace(/\D/g, '');
+    let searchPhone = cleanPhone;
+    if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
+      searchPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) {
+      searchPhone = cleanPhone.substring(1);
+    }
+
+    // Find the latest enquiry matching this phone suffix
+    const row = db.prepare(`
+      SELECT id, status FROM enquiries 
+      WHERE replace(phone, ' ', '') LIKE ? 
+      ORDER BY id DESC LIMIT 1
+    `).get(`%${searchPhone}%`);
+
+    if (!row) {
+      return res.status(404).json({ error: 'No bookings found for this phone number' });
+    }
+
+    res.json({ success: true, id: row.id, status: row.status });
+  } catch (err) {
+    console.error('Enquiry status by phone query error:', err);
+    res.status(500).json({ error: 'Failed to query status: ' + err.message });
+  }
+});
+
+/**
  * GET /api/enquiries
  * List all enquiries (admin protected)
  */

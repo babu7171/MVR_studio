@@ -722,7 +722,7 @@
       if (submitBtn) submitBtn.disabled = true;
       if (btnText)   btnText.textContent = 'Sending Request…';
 
-      // Build enquiry object
+      // Build enquiry object (initially with timestamp as temporary ID)
       const enquiry = {
         id:        Date.now(),
         timestamp: new Date().toLocaleString('en-IN'),
@@ -730,34 +730,13 @@
         status: 'New'
       };
 
-      // ── ALWAYS send WhatsApp notification to MVR Studio ──
       const cleanBudgetVal = (budget || 'Not specified')
         .replace(/&/g, '')
         .replace(/₹/g, 'Rs. ')
         .replace(/–/g, '-')
         .replace(/[^\x20-\x7E]/g, '');
 
-      const waMsg =
-        `🔔 *BOOKING CONFIRMED — MVR Studio*\n\n` +
-        `📄 *Quotation Ref:* MVR-${enquiry.id}\n` +
-        `👤 *Name:* ${name}\n` +
-        `📞 *Phone:* ${phone}\n` +
-        `📧 *Email:* ${email || 'Not provided'}\n` +
-        `🎬 *Service:* ${service}\n` +
-        `📅 *Event Date:* ${date || 'Not specified'}\n` +
-        `👥 *Guests:* ${guests || 'Not specified'}\n` +
-        `💰 *Budget:* ${cleanBudgetVal}\n` +
-        `💬 *Message:* ${message || 'No message'}\n\n` +
-        `📝 _Note: Client has generated the official Quotation PDF and will attach it below._\n\n` +
-        `⏰ Confirmed: ${enquiry.timestamp}`;
-
-      const waUrl = 'https://wa.me/919652341566?text=' + encodeURIComponent(waMsg);
-
-      // ── Save to localStorage ──
-      saveEnquiry(enquiry);
-      try { localStorage.setItem('hide_booking_status', 'false'); } catch (e) {}
-
-      // ── Save to server database ──
+      // ── Save to server database first to get real database ID ──
       try {
         const dbResp = await fetch('/api/enquiries', {
           method: 'POST',
@@ -777,16 +756,32 @@
           const dbData = await dbResp.json();
           if (dbData && dbData.success && dbData.id) {
             enquiry.id = dbData.id;
-            const existing = getEnquiries();
-            if (existing.length > 0) {
-              existing[existing.length - 1].id = dbData.id;
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-            }
           }
         }
       } catch (err) {
         console.warn('Failed to save booking to server database:', err);
       }
+
+      // ── Save to localStorage ──
+      saveEnquiry(enquiry);
+      try { localStorage.setItem('hide_booking_status', 'false'); } catch (e) {}
+
+      // ── ALWAYS send WhatsApp notification to MVR Studio with correct ID ──
+      const waMsg =
+        `🔔 *BOOKING CONFIRMED — MVR Studio*\n\n` +
+        `📄 *Quotation Ref:* MVR-${enquiry.id}\n` +
+        `👤 *Name:* ${name}\n` +
+        `📞 *Phone:* ${phone}\n` +
+        `📧 *Email:* ${email || 'Not provided'}\n` +
+        `🎬 *Service:* ${service}\n` +
+        `📅 *Event Date:* ${date || 'Not specified'}\n` +
+        `👥 *Guests:* ${guests || 'Not specified'}\n` +
+        `💰 *Budget:* ${cleanBudgetVal}\n` +
+        `💬 *Message:* ${message || 'No message'}\n\n` +
+        `📝 _Note: Client has generated the official Quotation PDF and will attach it below._\n\n` +
+        `⏰ Confirmed: ${enquiry.timestamp}`;
+
+      const waUrl = 'https://wa.me/919652341566?text=' + encodeURIComponent(waMsg);
 
       // ── Ask user if they want to download the PDF Quotation ──
       if (confirm('Would you like to download your official MVR Studio Quotation PDF?')) {
@@ -826,6 +821,7 @@
             Guests: guests || 'Not specified',
             Budget: cleanBudgetVal,
             Message: message || 'No message',
+            "Quotation Ref": `MVR-${enquiry.id}`,
             _honey: ""
           })
         });
@@ -1083,6 +1079,9 @@
       const latest = enquiries[enquiries.length - 1];
 
       let currentStatus = latest.status || 'New';
+      let fetched = false;
+
+      // 1. If it's a real server ID, query by ID
       if (latest.id && typeof latest.id === 'number' && latest.id < 1000000000000) {
         try {
           const res = await fetch(`/api/enquiries/status/${latest.id}`);
@@ -1092,10 +1091,32 @@
               currentStatus = data.status;
               latest.status = currentStatus;
               localStorage.setItem(STORAGE_KEY, JSON.stringify(enquiries));
+              fetched = true;
             }
           }
         } catch (err) {
-          console.warn('Could not fetch real-time booking status from server:', err);
+          console.warn('Could not fetch real-time booking status from server by ID:', err);
+        }
+      }
+
+      // 2. If not fetched (e.g. it was an old timestamp ID), query by phone number as a fallback
+      if (!fetched && latest.phone) {
+        try {
+          const res = await fetch(`/api/enquiries/status-by-phone/${encodeURIComponent(latest.phone)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.success && data.status) {
+              currentStatus = data.status;
+              if (data.id) {
+                latest.id = data.id; // Self-heal: update local storage with the real server ID!
+              }
+              latest.status = currentStatus;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(enquiries));
+              fetched = true;
+            }
+          }
+        } catch (err) {
+          console.warn('Could not fetch real-time booking status from server by phone:', err);
         }
       }
 
