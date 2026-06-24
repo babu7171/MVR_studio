@@ -5,14 +5,19 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const fs = require('fs');
 
-const DATA_DIR = process.env.DATA_DIR || __dirname;
-const DB_PATH = path.join(DATA_DIR, 'mvr_studio.db');
+let DB_PATH = path.join(process.env.DATA_DIR || __dirname, 'mvr_studio.db');
 
 let db;
 
 function getDb() {
   if (!db) {
-    db = new DatabaseSync(DB_PATH);
+    try {
+      db = new DatabaseSync(DB_PATH);
+    } catch (err) {
+      console.warn(`⚠️ Warning: Failed to initialize database at ${DB_PATH} (${err.message}). Falling back to local server database.`);
+      DB_PATH = path.join(__dirname, 'mvr_studio.db');
+      db = new DatabaseSync(DB_PATH);
+    }
     // WAL mode for better performance
     db.exec('PRAGMA journal_mode = WAL');
     db.exec('PRAGMA foreign_keys = ON');
