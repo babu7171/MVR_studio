@@ -11,6 +11,7 @@
      Change the email below to update where booking notification emails are sent!
   ══════════════════════════════════════════════════ */
   const STUDIO_EMAIL        = 'info@mvrstudio.in';
+  const STORAGE_KEY         = 'mvr_enquiries';
 
   /* ══════════════════════════════════════════════════
      PRELOADER
@@ -1109,7 +1110,7 @@
   /* ══════════════════════════════════════════════════
      DATA STORAGE (localStorage)
   ══════════════════════════════════════════════════ */
-  const STORAGE_KEY = 'mvr_enquiries';
+  // Storage key for client enquiries
 
   function saveEnquiry(enquiry) {
     const existing = getEnquiries();
