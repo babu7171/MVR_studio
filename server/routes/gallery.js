@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const { getDb } = require('../database');
 const { requireAuth } = require('../middleware/auth');
-const { uploadFileToDrive, deleteFileFromDrive, extractFileId } = require('../driveService');
+const { uploadFileToDrive, deleteFileFromDrive, extractFileId, fetchDriveGalleryTree } = require('../driveService');
 
 const router = express.Router();
 
@@ -349,6 +349,108 @@ router.delete('/:id', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Gallery DELETE error:', err);
     res.status(500).json({ error: 'Failed to delete gallery item: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/gallery/sync
+ * Sync Google Drive folders/files directly with SQLite gallery database table (admin protected)
+ */
+router.post('/sync', requireAuth, async (req, res) => {
+  try {
+    const db = getDb();
+    const hasDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS || (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN));
+    
+    if (!hasDrive) {
+      return res.status(400).json({ error: 'Google Drive integration is not configured on the server.' });
+    }
+
+    console.log('🔄 Scanning Google Drive folders for gallery synchronization...');
+    const driveTree = await fetchDriveGalleryTree();
+    const dbServices = db.prepare('SELECT id, name FROM services').all();
+
+    // Helper to find category ID by folder name
+    function matchCategory(folderName) {
+      if (folderName === 'Uncategorized') return 'wedding';
+      
+      const cleanFolder = folderName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      // Try exact or partial match with database services
+      for (const svc of dbServices) {
+        const cleanSvcName = svc.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (cleanFolder.includes(cleanSvcName) || cleanSvcName.includes(cleanFolder)) {
+          return svc.id;
+        }
+      }
+      return 'wedding'; // default fallback
+    }
+
+    const driveFileUrls = [];
+    let addedCount = 0;
+    let skippedCount = 0;
+
+    // Get all existing gallery URLs from SQLite to avoid duplicates
+    const existingRows = db.prepare('SELECT src FROM gallery').all();
+    const existingSrcs = new Set(existingRows.map(r => r.src));
+
+    const insertStmt = db.prepare(
+      'INSERT INTO gallery (src, type, cap, category) VALUES (?, ?, ?, ?)'
+    );
+
+    // Loop through subfolders and files found in Drive
+    for (const node of driveTree) {
+      const folderName = node.folderName;
+      const category = matchCategory(folderName);
+
+      for (const file of node.files) {
+        const cdnUrl = `https://lh3.googleusercontent.com/d/${file.id}`;
+        driveFileUrls.push(cdnUrl);
+
+        if (existingSrcs.has(cdnUrl)) {
+          skippedCount++;
+        } else {
+          const isVideo = file.mimeType.startsWith('video/');
+          const type = isVideo ? 'video' : 'photo';
+          // Clean filename to make a clean caption: e.g. "my-photo-name.jpg" -> "my photo name"
+          const cleanCap = file.name
+            .substring(0, file.name.lastIndexOf('.'))
+            .replace(/[-_]/g, ' ')
+            .trim();
+          const cap = cleanCap || 'MVR Work';
+
+          insertStmt.run(cdnUrl, type, cap, category);
+          addedCount++;
+        }
+      }
+    }
+
+    // Pruning phase: Delete items in DB that are no longer present in Google Drive
+    let prunedCount = 0;
+    if (driveFileUrls.length > 0) {
+      const placeholders = driveFileUrls.map(() => '?').join(',');
+      const deleteStmt = db.prepare(`
+        DELETE FROM gallery 
+        WHERE src LIKE 'https://lh3.googleusercontent.com/d/%' 
+          AND src NOT IN (${placeholders})
+      `);
+      const info = deleteStmt.run(...driveFileUrls);
+      prunedCount = info.changes;
+    } else {
+      const info = db.prepare("DELETE FROM gallery WHERE src LIKE 'https://lh3.googleusercontent.com/d/%'").run();
+      prunedCount = info.changes;
+    }
+
+    console.log(`✅ Gallery Sync Complete: Added ${addedCount}, Skipped ${skippedCount}, Pruned ${prunedCount}`);
+    res.json({
+      success: true,
+      added: addedCount,
+      skipped: skippedCount,
+      pruned: prunedCount,
+      message: `Google Drive sync complete! Added ${addedCount} new items, pruned ${prunedCount} deleted items.`
+    });
+  } catch (err) {
+    console.error('Google Drive gallery sync error:', err);
+    res.status(500).json({ error: 'Failed to sync Google Drive gallery: ' + err.message });
   }
 });
 

@@ -261,10 +261,63 @@ async function downloadFileFromDrive(fileId, destPath) {
   });
 }
 
+/**
+ * Fetches all subfolders and files inside the main Google Drive folder
+ * @returns {Promise<Array<{folderName: string, files: Array<{id: string, name: string, mimeType: string}>}>>}
+ */
+async function fetchDriveGalleryTree() {
+  const drive = getDriveClient();
+  const rootFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  if (!rootFolderId) {
+    throw new Error('GOOGLE_DRIVE_FOLDER_ID environment variable is missing.');
+  }
+
+  // 1. List all subfolders in the root folder
+  const folderResponse = await drive.files.list({
+    q: `'${rootFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: 'files(id, name)',
+    pageSize: 100
+  });
+
+  const folders = folderResponse.data.files || [];
+  const result = [];
+
+  // 2. For each subfolder, list all files (images and videos)
+  for (const folder of folders) {
+    const fileResponse = await drive.files.list({
+      q: `'${folder.id}' in parents and (mimeType startsWith 'image/' or mimeType startsWith 'video/') and trashed = false`,
+      fields: 'files(id, name, mimeType)',
+      pageSize: 1000
+    });
+
+    result.push({
+      folderName: folder.name,
+      files: fileResponse.data.files || []
+    });
+  }
+
+  // 3. Also get files from root folder
+  const rootFilesResponse = await drive.files.list({
+    q: `'${rootFolderId}' in parents and (mimeType startsWith 'image/' or mimeType startsWith 'video/') and trashed = false`,
+    fields: 'files(id, name, mimeType)',
+    pageSize: 1000
+  });
+  const rootFiles = rootFilesResponse.data.files || [];
+  if (rootFiles.length > 0) {
+    result.push({
+      folderName: 'Uncategorized',
+      files: rootFiles
+    });
+  }
+
+  return result;
+}
+
 module.exports = {
   uploadFileToDrive,
   deleteFileFromDrive,
   extractFileId,
   listBackupsInDrive,
-  downloadFileFromDrive
+  downloadFileFromDrive,
+  fetchDriveGalleryTree
 };

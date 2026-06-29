@@ -1047,6 +1047,43 @@
       });
     }
 
+    // Handle Google Drive Gallery Sync
+    const btnSyncDrive = document.getElementById('btnSyncDrive');
+    if (btnSyncDrive) {
+      btnSyncDrive.addEventListener('click', async () => {
+        const confirmMsg = '⚠️ WARNING: Syncing will scan all subfolders inside your main Google Drive folder. \n\n- New photos/videos found will be added to the website portfolio automatically.\n- Photos/videos deleted from Google Drive will be removed from the website portfolio.\n\nDo you want to run synchronization now?';
+        if (!confirm(confirmMsg)) return;
+
+        showBackupLoadingSpinner('Syncing portfolio with Google Drive folders...');
+
+        try {
+          const resp = await fetch('/api/gallery/sync', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${jwtToken}`
+            }
+          });
+          const data = await resp.json();
+          if (resp.ok && data.success) {
+            alert(`🎉 Sync Complete!\n\n${data.message}`);
+            // Reload local gallery grid
+            if (typeof renderGalleryList === 'function') {
+              renderGalleryList();
+            } else {
+              location.reload();
+            }
+          } else {
+            alert('❌ Google Drive Sync failed:\n' + (data.error || 'Unknown error'));
+          }
+        } catch (err) {
+          console.error('Drive sync error:', err);
+          alert('❌ Error running Google Drive Sync: ' + err.message);
+        } finally {
+          hideBackupLoadingSpinner();
+        }
+      });
+    }
+
     // Hide GitHub-specific UI elements since we now use the backend
     if (syncToGithubCheck) {
       const syncRow = syncToGithubCheck.closest?.('label') || syncToGithubCheck.parentElement;
