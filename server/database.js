@@ -112,4 +112,8 @@ function seedDefaultServices() {
   console.log('✅ Default services seeded into database');
 }
 
-module.exports = { getDb };
+function getDbPath() {
+  return DB_PATH;
+}
+
+module.exports = { getDb, getDbPath };

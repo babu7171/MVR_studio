@@ -106,6 +106,25 @@
       background: rgba(255,82,82,0.2);
       border-color: #ff5252;
     }
+    .btn-backup {
+      background: rgba(201,165,90,0.1);
+      border: 1px solid rgba(201,165,90,0.25);
+      color: var(--gold);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-backup:hover {
+      background: rgba(201,165,90,0.2);
+      border-color: var(--gold);
+    }
     .admin-tabs {
       display: flex;
       gap: 10px;
@@ -307,6 +326,7 @@
       </div>
       <div class="admin-nav-actions">
         <a href="index.html" class="btn-ghost" style="padding: 8px 20px; border-radius: 50px; font-size: 0.82rem; text-decoration:none;">🌐 View Site</a>
+        <button id="btnBackup" class="btn-backup">💾 Backup DB</button>
         <button id="btnLogout" class="btn-logout">Logout</button>
       </div>
     </header>
@@ -474,6 +494,6 @@
     </div>
   </div>
 
-  <script src="admin.js?v=2.0" charset="utf-8"></script>
+  <script src="admin.js?v=2.1" charset="utf-8"></script>
 </body>
 </html>

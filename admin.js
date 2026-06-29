@@ -106,6 +106,43 @@
     });
   }
 
+  // Handle Database Backup Download
+  const btnBackup = document.getElementById('btnBackup');
+  if (btnBackup) {
+    btnBackup.addEventListener('click', async () => {
+      const originalText = btnBackup.innerHTML;
+      btnBackup.disabled = true;
+      btnBackup.innerHTML = '⏳ Backing up...';
+      
+      try {
+        const resp = await fetch('/api/enquiries/backup', {
+          headers: { 'Authorization': `Bearer ${jwtToken}` }
+        });
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          const timestamp = new Date().toISOString().slice(0, 10);
+          a.download = `mvr_studio_backup_${timestamp}.db`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          a.remove();
+        } else {
+          alert('❌ Database backup failed. Status: ' + resp.status);
+        }
+      } catch (err) {
+        console.error('Backup download error:', err);
+        alert('❌ Error downloading backup: ' + err.message);
+      } finally {
+        btnBackup.disabled = false;
+        btnBackup.innerHTML = originalText;
+      }
+    });
+  }
+
   // Initialize Dashboard
   function initDashboard() {
     initTabs();

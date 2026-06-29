@@ -2,7 +2,7 @@
 'use strict';
 
 const express = require('express');
-const { getDb } = require('../database');
+const { getDb, getDbPath } = require('../database');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -133,6 +133,27 @@ router.get('/', requireAuth, (req, res) => {
   } catch (err) {
     console.error('Enquiries GET error:', err);
     res.status(500).json({ error: 'Failed to fetch enquiries' });
+  }
+});
+
+/**
+ * GET /api/enquiries/backup
+ * Download SQLite database backup file (admin protected)
+ */
+router.get('/backup', requireAuth, (req, res) => {
+  try {
+    const dbPath = getDbPath();
+    res.download(dbPath, 'mvr_studio_backup.db', (err) => {
+      if (err) {
+        console.error('Database backup download failed:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to download database backup file' });
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Backup endpoint error:', err);
+    res.status(500).json({ error: 'Internal server error during backup generation' });
   }
 });
 
