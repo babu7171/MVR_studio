@@ -192,9 +192,39 @@
     });
   }
 
-  // 3. Restore Database
-  if (btnRestore && restoreFileInput) {
+  // 3. Restore Database Modal & Actions
+  const restoreModal = document.getElementById('restoreModal');
+  const btnCloseRestoreModal = document.getElementById('btnCloseRestoreModal');
+  const btnUploadRestore = document.getElementById('btnUploadRestore');
+  const driveBackupsLoading = document.getElementById('driveBackupsLoading');
+  const driveBackupsContainer = document.getElementById('driveBackupsContainer');
+  const driveBackupsList = document.getElementById('driveBackupsList');
+
+  if (btnRestore && restoreModal) {
     btnRestore.addEventListener('click', () => {
+      restoreModal.style.display = 'flex';
+      loadDriveBackups();
+    });
+  }
+
+  if (btnCloseRestoreModal && restoreModal) {
+    btnCloseRestoreModal.addEventListener('click', () => {
+      restoreModal.style.display = 'none';
+    });
+  }
+
+  // Close modal when clicking outside contents
+  if (restoreModal) {
+    restoreModal.addEventListener('click', (e) => {
+      if (e.target === restoreModal) {
+        restoreModal.style.display = 'none';
+      }
+    });
+  }
+
+  // Option 1: Local PC File Upload Restore
+  if (btnUploadRestore && restoreFileInput) {
+    btnUploadRestore.addEventListener('click', () => {
       restoreFileInput.click();
     });
 
@@ -208,9 +238,8 @@
         return;
       }
 
-      const originalText = btnRestore.innerHTML;
-      btnRestore.disabled = true;
-      btnRestore.innerHTML = '⏳ Restoring...';
+      restoreModal.style.display = 'none';
+      showBackupLoadingSpinner('Restoring database...');
 
       const formData = new FormData();
       formData.append('backupFile', file);
@@ -235,11 +264,134 @@
         console.error('Database restore error:', err);
         alert('❌ Error restoring database: ' + err.message);
       } finally {
-        btnRestore.disabled = false;
-        btnRestore.innerHTML = originalText;
+        hideBackupLoadingSpinner();
         restoreFileInput.value = '';
       }
     });
+  }
+
+  // Option 2: Restore from Google Drive Backups list
+  async function loadDriveBackups() {
+    if (!driveBackupsLoading || !driveBackupsContainer || !driveBackupsList) return;
+    
+    driveBackupsLoading.style.display = 'block';
+    driveBackupsLoading.textContent = '⏳ Connecting to Google Drive...';
+    driveBackupsContainer.style.display = 'none';
+    driveBackupsList.innerHTML = '';
+
+    try {
+      const resp = await fetch('/api/enquiries/backup/list', {
+        headers: { 'Authorization': `Bearer ${jwtToken}` }
+      });
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        if (!data.backups || data.backups.length === 0) {
+          driveBackupsLoading.textContent = '📭 No backups found on Google Drive.';
+          return;
+        }
+
+        driveBackupsLoading.style.display = 'none';
+        driveBackupsContainer.style.display = 'block';
+
+        data.backups.forEach(item => {
+          const li = document.createElement('li');
+          li.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.78rem; color:var(--white);';
+          
+          const info = document.createElement('div');
+          const nameSpan = document.createElement('div');
+          nameSpan.style.fontWeight = 'bold';
+          nameSpan.textContent = item.name;
+          
+          const timeSpan = document.createElement('div');
+          timeSpan.style.color = 'var(--g4)';
+          timeSpan.style.fontSize = '0.7rem';
+          const dateStr = new Date(item.createdTime).toLocaleString();
+          timeSpan.textContent = `Uploaded: ${dateStr}`;
+          
+          info.appendChild(nameSpan);
+          info.appendChild(timeSpan);
+
+          const rBtn = document.createElement('button');
+          rBtn.textContent = 'Restore';
+          rBtn.style.cssText = 'background:var(--gold); border:none; color:var(--navy); padding:5px 12px; border-radius:var(--r1); font-weight:700; cursor:pointer; font-size:0.75rem;';
+          
+          rBtn.addEventListener('click', async () => {
+            const confirmMsg = `⚠️ WARNING: Restoring the database will OVERWRITE all current bookings, services, gallery entries, and settings.\n\nAre you sure you want to restore the database from Google Drive backup:\n${item.name}?`;
+            if (!confirm(confirmMsg)) return;
+
+            restoreModal.style.display = 'none';
+            showBackupLoadingSpinner('Downloading and restoring database from Drive...');
+
+            try {
+              const res = await fetch('/api/enquiries/restore/drive', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${jwtToken}`
+                },
+                body: JSON.stringify({ fileId: item.id, filename: item.name })
+              });
+              const resData = await res.json();
+              if (res.ok && resData.success) {
+                alert('✅ Database successfully restored from Google Drive! Reloading...');
+                location.reload();
+              } else {
+                alert('❌ Google Drive restoration failed:\n' + (resData.error || 'Unknown error'));
+              }
+            } catch (err) {
+              console.error('Google Drive restore post error:', err);
+              alert('❌ Error during Google Drive restoration: ' + err.message);
+            } finally {
+              hideBackupLoadingSpinner();
+            }
+          });
+
+          li.appendChild(info);
+          li.appendChild(rBtn);
+          driveBackupsList.appendChild(li);
+        });
+      } else {
+        driveBackupsLoading.textContent = '❌ Failed to list backups: ' + (data.error || 'Connection error');
+      }
+    } catch (err) {
+      console.error('Fetch backups list error:', err);
+      driveBackupsLoading.textContent = '❌ Error fetching backups list: ' + err.message;
+    }
+  }
+
+  // Visual feedback overlay helper during restore process
+  let spinnerOverlay = null;
+  function showBackupLoadingSpinner(message) {
+    if (!spinnerOverlay) {
+      spinnerOverlay = document.createElement('div');
+      spinnerOverlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); color:var(--white); font-weight:bold; font-size:1.1rem; gap:15px;';
+      
+      const spinner = document.createElement('div');
+      spinner.style.cssText = 'width:50px; height:50px; border:5px solid rgba(255,255,255,0.1); border-top:5px solid var(--gold); border-radius:50%; animation: spin 1s linear infinite;';
+      spinnerOverlay.appendChild(spinner);
+      
+      const msgText = document.createElement('div');
+      msgText.id = 'spinnerMessage';
+      spinnerOverlay.appendChild(msgText);
+      
+      // Inject standard keyframe animation if not already existing
+      if (!document.getElementById('spinStyle')) {
+        const style = document.createElement('style');
+        style.id = 'spinStyle';
+        style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(spinnerOverlay);
+    }
+    document.getElementById('spinnerMessage').textContent = message;
+    spinnerOverlay.style.display = 'flex';
+  }
+
+  function hideBackupLoadingSpinner() {
+    if (spinnerOverlay) {
+      spinnerOverlay.style.display = 'none';
+    }
   }
 
   // Initialize Dashboard

@@ -4,7 +4,7 @@
 const express = require('express');
 const { getDb, getDbPath, restoreDb } = require('../database');
 const { requireAuth } = require('../middleware/auth');
-const { uploadFileToDrive } = require('../driveService');
+const { uploadFileToDrive, listBackupsInDrive, downloadFileFromDrive } = require('../driveService');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -230,6 +230,61 @@ router.post('/restore', requireAuth, backupUpload.single('backupFile'), (req, re
   } catch (err) {
     console.error('Backup restore error:', err);
     res.status(500).json({ error: 'Internal server error during database restoration: ' + err.message });
+  }
+});
+
+/**
+ * GET /api/enquiries/backup/list
+ * List all backup files in Google Drive backups subfolder (admin protected)
+ */
+router.get('/backup/list', requireAuth, async (req, res) => {
+  try {
+    const backups = await listBackupsInDrive();
+    res.json({ success: true, backups });
+  } catch (err) {
+    console.error('Failed to list backups on Google Drive:', err);
+    res.status(500).json({ error: 'Failed to list backups on Google Drive: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/enquiries/restore/drive
+ * Restore SQLite database directly from a Google Drive file ID (admin protected)
+ */
+router.post('/restore/drive', requireAuth, async (req, res) => {
+  try {
+    const { fileId, filename } = req.body;
+    if (!fileId) {
+      return res.status(400).json({ error: 'Missing Google Drive file ID.' });
+    }
+
+    const tempPath = path.join(TEMP_DIR, `drive_restore_${Date.now()}.db`);
+    
+    console.log(`🚀 Downloading database backup (${filename || fileId}) from Google Drive...`);
+    await downloadFileFromDrive(fileId, tempPath);
+
+    // Safety check: is it a valid SQLite file?
+    const buffer = Buffer.alloc(16);
+    const fd = fs.openSync(tempPath, 'r');
+    fs.readSync(fd, buffer, 0, 16, 0);
+    fs.closeSync(fd);
+
+    const header = buffer.toString('utf-8', 0, 15);
+    if (header !== 'SQLite format 3') {
+      fs.unlinkSync(tempPath);
+      return res.status(400).json({ error: 'Downloaded file is not a valid SQLite database backup.' });
+    }
+
+    console.log(`⚠️ Restoring database from Google Drive backup file...`);
+    restoreDb(tempPath);
+
+    // Delete temporary file
+    fs.unlinkSync(tempPath);
+
+    res.json({ success: true, message: 'Database successfully restored from Google Drive!' });
+  } catch (err) {
+    console.error('Google Drive backup restore error:', err);
+    res.status(500).json({ error: 'Internal server error during Google Drive restoration: ' + err.message });
   }
 });
 

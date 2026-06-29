@@ -203,8 +203,68 @@ function extractFileId(url) {
   return null;
 }
 
+/**
+ * List all backup files in the Google Drive folder
+ * @returns {Promise<Array<{id: string, name: string, createdTime: string}>>}
+ */
+async function listBackupsInDrive() {
+  const drive = getDriveClient();
+  let folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  
+  if (folderId) {
+    try {
+      folderId = await getOrCreateSubfolder(folderId, 'backups');
+    } catch (err) {
+      console.warn('Failed to find backups folder, searching globally in app folder:', err.message);
+    }
+  }
+
+  const query = folderId 
+    ? `'${folderId}' in parents and name contains 'mvr_studio_backup_' and trashed = false`
+    : `name contains 'mvr_studio_backup_' and trashed = false`;
+
+  const response = await drive.files.list({
+    q: query,
+    fields: 'files(id, name, createdTime)',
+    orderBy: 'createdTime desc',
+    pageSize: 20
+  });
+
+  return response.data.files || [];
+}
+
+/**
+ * Download a file from Google Drive and save it to disk
+ * @param {string} fileId
+ * @param {string} destPath
+ * @returns {Promise<void>}
+ */
+async function downloadFileFromDrive(fileId, destPath) {
+  const drive = getDriveClient();
+  const fs = require('fs');
+  const dest = fs.createWriteStream(destPath);
+  
+  const response = await drive.files.get(
+    { fileId: fileId, alt: 'media' },
+    { responseType: 'stream' }
+  );
+
+  return new Promise((resolve, reject) => {
+    response.data
+      .on('end', () => {
+        resolve();
+      })
+      .on('error', err => {
+        reject(err);
+      })
+      .pipe(dest);
+  });
+}
+
 module.exports = {
   uploadFileToDrive,
   deleteFileFromDrive,
-  extractFileId
+  extractFileId,
+  listBackupsInDrive,
+  downloadFileFromDrive
 };
