@@ -917,6 +917,141 @@
       console.warn('Failed to fetch booked dates from server:', err);
     }
 
+    // Render Availability Calendar grid
+    const calContainer = document.getElementById('availabilityCalendar');
+    if (calContainer) {
+      let currentYear = new Date().getFullYear();
+      let currentMonth = new Date().getMonth(); // 0-indexed
+
+      function drawCalendar(year, month) {
+        calContainer.innerHTML = '';
+        
+        // Header
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:0.88rem;';
+        
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const title = document.createElement('strong');
+        title.style.color = 'var(--white)';
+        title.textContent = `${monthNames[month]} ${year}`;
+        
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.textContent = '◀';
+        prevBtn.style.cssText = 'background:transparent; border:none; color:var(--gold); cursor:pointer; font-size:0.75rem; padding:4px;';
+        // Disable back navigation before current month
+        const todayDate = new Date();
+        if (year < todayDate.getFullYear() || (year === todayDate.getFullYear() && month <= todayDate.getMonth())) {
+          prevBtn.style.opacity = '0.3';
+          prevBtn.style.cursor = 'not-allowed';
+          prevBtn.disabled = true;
+        } else {
+          prevBtn.addEventListener('click', () => {
+            if (month === 0) {
+              drawCalendar(year - 1, 11);
+            } else {
+              drawCalendar(year, month - 1);
+            }
+          });
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.textContent = '▶';
+        nextBtn.style.cssText = 'background:transparent; border:none; color:var(--gold); cursor:pointer; font-size:0.75rem; padding:4px;';
+        nextBtn.addEventListener('click', () => {
+          if (month === 11) {
+            drawCalendar(year + 1, 0);
+          } else {
+            drawCalendar(year, month + 1);
+          }
+        });
+
+        header.appendChild(prevBtn);
+        header.appendChild(title);
+        header.appendChild(nextBtn);
+        calContainer.appendChild(header);
+
+        // Days Grid
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid; grid-template-columns:repeat(7, 1fr); gap:6px; text-align:center; font-size:0.76rem;';
+        
+        const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+        weekDays.forEach(day => {
+          const lbl = document.createElement('span');
+          lbl.style.cssText = 'color:var(--g4); font-weight:700; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.05);';
+          lbl.textContent = day;
+          grid.appendChild(lbl);
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Empty cells for first week offset
+        for (let i = 0; i < firstDay; i++) {
+          const empty = document.createElement('span');
+          grid.appendChild(empty);
+        }
+
+        // Days
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(year, month, day);
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          
+          const cell = document.createElement('span');
+          cell.style.cssText = 'padding:6px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; margin:0 auto; font-weight:600; transition: all 0.2s;';
+          cell.textContent = day;
+
+          const isPast = date < new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
+          const isBooked = bookedDates.includes(dateStr);
+
+          if (isPast) {
+            cell.style.color = 'var(--g4)';
+            cell.style.opacity = '0.3';
+          } else if (isBooked) {
+            cell.style.background = 'rgba(255,82,82,0.15)';
+            cell.style.border = '1px solid #ff5252';
+            cell.style.color = '#ff5252';
+            cell.title = 'Fully Booked';
+          } else {
+            cell.style.border = '1px solid rgba(255,255,255,0.1)';
+            cell.style.color = 'var(--white)';
+            cell.style.cursor = 'pointer';
+            cell.title = 'Available';
+
+            cell.addEventListener('mouseover', () => {
+              cell.style.background = 'rgba(201,165,90,0.15)';
+              cell.style.borderColor = 'var(--gold)';
+              cell.style.color = 'var(--gold)';
+            });
+            cell.addEventListener('mouseout', () => {
+              cell.style.background = '';
+              cell.style.borderColor = 'rgba(255,255,255,0.1)';
+              cell.style.color = 'var(--white)';
+            });
+
+            cell.addEventListener('click', () => {
+              fDate.value = dateStr;
+              fDate.dispatchEvent(new Event('input'));
+              fDate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              
+              // Visual highlight on date picker
+              fDate.style.boxShadow = '0 0 15px rgba(201,165,90,0.6)';
+              fDate.style.borderColor = 'var(--gold)';
+              setTimeout(() => {
+                fDate.style.boxShadow = '';
+                fDate.style.borderColor = '';
+              }, 2000);
+            });
+          }
+          grid.appendChild(cell);
+        }
+        calContainer.appendChild(grid);
+      }
+
+      drawCalendar(currentYear, currentMonth);
+    }
+
     // Add listener to validate selected date
     fDate.addEventListener('input', () => {
       const selected = fDate.value; // Format: "YYYY-MM-DD"
