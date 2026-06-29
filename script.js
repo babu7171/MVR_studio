@@ -1442,6 +1442,8 @@
         msgArea.value = `I am interested in the ${pkg}. Please contact me with details.`;
       }
     });
+  });
+
   /* ══════════════════════════════════════════════════
      BEFORE / AFTER IMAGE SLIDER
   ══════════════════════════════════════════════════ */

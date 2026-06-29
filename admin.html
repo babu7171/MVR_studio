@@ -125,6 +125,10 @@
       background: rgba(201,165,90,0.2);
       border-color: var(--gold);
     }
+    #backupDropdownMenu button:hover {
+      background: rgba(201,165,90,0.12) !important;
+      color: var(--gold) !important;
+    }
     .admin-tabs {
       display: flex;
       gap: 10px;
@@ -326,7 +330,20 @@
       </div>
       <div class="admin-nav-actions">
         <a href="index.html" class="btn-ghost" style="padding: 8px 20px; border-radius: 50px; font-size: 0.82rem; text-decoration:none;">🌐 View Site</a>
-        <button id="btnBackup" class="btn-backup">💾 Backup DB</button>
+        
+        <!-- Backup Actions Dropdown -->
+        <div class="backup-dropdown-wrap" style="position: relative; display: inline-block;">
+          <button id="btnBackupToggle" class="btn-backup" style="gap: 4px;">💾 Backup ▾</button>
+          <div id="backupDropdownMenu" style="display: none; position: absolute; right: 0; top: 110%; background: var(--navy2); border: 1px solid rgba(201,165,90,0.3); border-radius: var(--r1); padding: 6px 0; min-width: 170px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <button id="btnBackupDownload" style="display: block; width: 100%; text-align: left; padding: 10px 16px; background: transparent; border: none; color: var(--white); font-size: 0.82rem; cursor: pointer; transition: all 0.2s;">📥 Download to PC</button>
+            <button id="btnBackupDrive" style="display: block; width: 100%; text-align: left; padding: 10px 16px; background: transparent; border: none; color: var(--white); font-size: 0.82rem; cursor: pointer; transition: all 0.2s;">☁️ Upload to Drive</button>
+          </div>
+        </div>
+
+        <!-- Restore Actions -->
+        <button id="btnRestore" class="btn-backup" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: var(--white); gap: 4px;">📤 Restore</button>
+        <input type="file" id="restoreFileInput" accept=".db" style="display: none;"/>
+
         <button id="btnLogout" class="btn-logout">Logout</button>
       </div>
     </header>

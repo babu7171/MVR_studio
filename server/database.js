@@ -116,4 +116,21 @@ function getDbPath() {
   return DB_PATH;
 }
 
-module.exports = { getDb, getDbPath };
+function restoreDb(backupPath) {
+  if (db) {
+    try {
+      db.close();
+    } catch (err) {
+      console.warn('Error closing database during restore:', err.message);
+    }
+    db = null;
+  }
+  
+  // Copy the backup file over the active DB file
+  fs.copyFileSync(backupPath, DB_PATH);
+  
+  // Re-open DB connection
+  getDb();
+}
+
+module.exports = { getDb, getDbPath, restoreDb };

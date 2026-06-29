@@ -2,10 +2,21 @@
 'use strict';
 
 const express = require('express');
-const { getDb, getDbPath } = require('../database');
+const { getDb, getDbPath, restoreDb } = require('../database');
 const { requireAuth } = require('../middleware/auth');
+const { uploadFileToDrive } = require('../driveService');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const router = express.Router();
+
+// Ensure temp uploads folder exists for backup restoration
+const TEMP_DIR = path.join(__dirname, '..', 'uploads', 'temp');
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+}
+const backupUpload = multer({ dest: TEMP_DIR });
 
 /**
  * POST /api/enquiries
@@ -138,12 +149,40 @@ router.get('/', requireAuth, (req, res) => {
 
 /**
  * GET /api/enquiries/backup
- * Download SQLite database backup file (admin protected)
+ * Download or upload SQLite database backup file (admin protected)
  */
-router.get('/backup', requireAuth, (req, res) => {
+router.get('/backup', requireAuth, async (req, res) => {
   try {
     const dbPath = getDbPath();
-    res.download(dbPath, 'mvr_studio_backup.db', (err) => {
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const backupFileName = `mvr_studio_backup_${timestamp}.db`;
+
+    const hasDrive = !!(process.env.GOOGLE_DRIVE_CREDENTIALS || (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN));
+
+    if (req.query.drive === 'true') {
+      if (!hasDrive) {
+        return res.status(400).json({ error: 'Google Drive integration is not configured on the server.' });
+      }
+
+      try {
+        console.log(`🚀 Uploading database backup (${backupFileName}) to Google Drive...`);
+        const uploadResult = await uploadFileToDrive(dbPath, backupFileName, 'application/x-sqlite3', 'backups');
+        const driveUrl = `https://drive.google.com/file/d/${uploadResult.fileId}/view`;
+        
+        return res.json({ 
+          success: true, 
+          driveUrl, 
+          filename: backupFileName,
+          message: 'Database backup uploaded successfully to Google Drive!' 
+        });
+      } catch (driveErr) {
+        console.error('Google Drive backup upload failed, falling back to local download:', driveErr);
+        // Do not return error, proceed to local download fallback below
+      }
+    }
+
+    // Default Fallback: Stream/download directly to browser
+    res.download(dbPath, backupFileName, (err) => {
       if (err) {
         console.error('Database backup download failed:', err);
         if (!res.headersSent) {
@@ -154,6 +193,43 @@ router.get('/backup', requireAuth, (req, res) => {
   } catch (err) {
     console.error('Backup endpoint error:', err);
     res.status(500).json({ error: 'Internal server error during backup generation' });
+  }
+});
+
+/**
+ * POST /api/enquiries/restore
+ * Restore SQLite database from uploaded file (admin protected)
+ */
+router.post('/restore', requireAuth, backupUpload.single('backupFile'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No backup file uploaded.' });
+    }
+
+    const tempPath = req.file.path;
+    
+    // Safety check: is it a valid SQLite file?
+    const buffer = Buffer.alloc(16);
+    const fd = fs.openSync(tempPath, 'r');
+    fs.readSync(fd, buffer, 0, 16, 0);
+    fs.closeSync(fd);
+
+    const header = buffer.toString('utf-8', 0, 15);
+    if (header !== 'SQLite format 3') {
+      fs.unlinkSync(tempPath); // delete invalid upload
+      return res.status(400).json({ error: 'Uploaded file is not a valid SQLite database backup.' });
+    }
+
+    console.log(`⚠️ Restoring database from uploaded backup file...`);
+    restoreDb(tempPath);
+
+    // Delete temporary file
+    fs.unlinkSync(tempPath);
+
+    res.json({ success: true, message: 'Database successfully restored!' });
+  } catch (err) {
+    console.error('Backup restore error:', err);
+    res.status(500).json({ error: 'Internal server error during database restoration: ' + err.message });
   }
 });
 

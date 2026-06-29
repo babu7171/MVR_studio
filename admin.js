@@ -106,14 +106,35 @@
     });
   }
 
-  // Handle Database Backup Download
-  const btnBackup = document.getElementById('btnBackup');
-  if (btnBackup) {
-    btnBackup.addEventListener('click', async () => {
-      const originalText = btnBackup.innerHTML;
-      btnBackup.disabled = true;
-      btnBackup.innerHTML = '⏳ Backing up...';
-      
+  // Handle Database Backup & Restore Flow
+  const btnBackupToggle = document.getElementById('btnBackupToggle');
+  const backupDropdownMenu = document.getElementById('backupDropdownMenu');
+  const btnBackupDownload = document.getElementById('btnBackupDownload');
+  const btnBackupDrive = document.getElementById('btnBackupDrive');
+  const btnRestore = document.getElementById('btnRestore');
+  const restoreFileInput = document.getElementById('restoreFileInput');
+
+  if (btnBackupToggle && backupDropdownMenu) {
+    // Toggle dropdown
+    btnBackupToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = backupDropdownMenu.style.display === 'block';
+      backupDropdownMenu.style.display = isVisible ? 'none' : 'block';
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener('click', () => {
+      backupDropdownMenu.style.display = 'none';
+    });
+  }
+
+  // 1. Download Backup locally
+  if (btnBackupDownload) {
+    btnBackupDownload.addEventListener('click', async () => {
+      const originalText = btnBackupToggle.innerHTML;
+      btnBackupToggle.disabled = true;
+      btnBackupToggle.innerHTML = '⏳ PC Backup...';
+
       try {
         const resp = await fetch('/api/enquiries/backup', {
           headers: { 'Authorization': `Bearer ${jwtToken}` }
@@ -137,8 +158,86 @@
         console.error('Backup download error:', err);
         alert('❌ Error downloading backup: ' + err.message);
       } finally {
-        btnBackup.disabled = false;
-        btnBackup.innerHTML = originalText;
+        btnBackupToggle.disabled = false;
+        btnBackupToggle.innerHTML = originalText;
+      }
+    });
+  }
+
+  // 2. Upload Backup to Google Drive
+  if (btnBackupDrive) {
+    btnBackupDrive.addEventListener('click', async () => {
+      const originalText = btnBackupToggle.innerHTML;
+      btnBackupToggle.disabled = true;
+      btnBackupToggle.innerHTML = '⏳ Cloud Backup...';
+
+      try {
+        const resp = await fetch('/api/enquiries/backup?drive=true', {
+          headers: { 'Authorization': `Bearer ${jwtToken}` }
+        });
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+          alert(`🎉 Success!\n\n${data.message}\n\nFile: ${data.filename}\nLink: ${data.driveUrl}`);
+          window.open(data.driveUrl, '_blank');
+        } else {
+          alert('❌ Google Drive backup failed:\n' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        console.error('Drive backup error:', err);
+        alert('❌ Error saving backup to Drive: ' + err.message);
+      } finally {
+        btnBackupToggle.disabled = false;
+        btnBackupToggle.innerHTML = originalText;
+      }
+    });
+  }
+
+  // 3. Restore Database
+  if (btnRestore && restoreFileInput) {
+    btnRestore.addEventListener('click', () => {
+      restoreFileInput.click();
+    });
+
+    restoreFileInput.addEventListener('change', async () => {
+      const file = restoreFileInput.files[0];
+      if (!file) return;
+
+      const confirmMsg = `⚠️ WARNING: Restoring the database will OVERWRITE all current bookings, services, gallery entries, and settings.\n\nAre you sure you want to proceed with restoring the database from:\n${file.name}?`;
+      if (!confirm(confirmMsg)) {
+        restoreFileInput.value = '';
+        return;
+      }
+
+      const originalText = btnRestore.innerHTML;
+      btnRestore.disabled = true;
+      btnRestore.innerHTML = '⏳ Restoring...';
+
+      const formData = new FormData();
+      formData.append('backupFile', file);
+
+      try {
+        const resp = await fetch('/api/enquiries/restore', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`
+          },
+          body: formData
+        });
+        
+        const data = await resp.json();
+        if (resp.ok && data.success) {
+          alert('✅ Database successfully restored! The dashboard will now reload.');
+          location.reload();
+        } else {
+          alert('❌ Database restoration failed:\n' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        console.error('Database restore error:', err);
+        alert('❌ Error restoring database: ' + err.message);
+      } finally {
+        btnRestore.disabled = false;
+        btnRestore.innerHTML = originalText;
+        restoreFileInput.value = '';
       }
     });
   }
