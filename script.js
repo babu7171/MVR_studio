@@ -1401,11 +1401,16 @@
      SMOOTH SCROLL for anchor links
   ══════════════════════════════════════════════════ */
   document.querySelectorAll('a[href^="#"]').forEach(a => {
-    // Skip if it's the admin link
     if (a.id === 'ftAdminLink') return;
+    const href = a.getAttribute('href');
+    if (!href || href === '#') return;
     a.addEventListener('click', e => {
-      const target = document.querySelector(a.getAttribute('href'));
-      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      try {
+        const target = document.querySelector(href);
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      } catch (err) {
+        console.warn('Failed smooth scroll to:', href, err);
+      }
     });
   });
 
