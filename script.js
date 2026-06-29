@@ -1442,6 +1442,21 @@
         msgArea.value = `I am interested in the ${pkg}. Please contact me with details.`;
       }
     });
-  });
+  /* ══════════════════════════════════════════════════
+     BEFORE / AFTER IMAGE SLIDER
+  ══════════════════════════════════════════════════ */
+  (function initEditingSlider() {
+    const baRange = document.getElementById('baRange');
+    const baImageBefore = document.getElementById('baImageBefore');
+    const baHandle = document.getElementById('baHandle');
+
+    if (baRange && baImageBefore && baHandle) {
+      baRange.addEventListener('input', (e) => {
+        const val = e.target.value;
+        baImageBefore.style.width = `${val}%`;
+        baHandle.style.left = `${val}%`;
+      });
+    }
+  })();
 
 })();

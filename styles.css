@@ -657,6 +657,107 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .why-card h3 { font-size: .97rem; font-weight: 700; margin-bottom: 10px; }
 .why-card p { color: var(--g3); font-size: .87rem; line-height: 1.65; }
 
+
+/* ==============================================
+   BEFORE & AFTER RETOUCHING COMPARISON SLIDER
+   ============================================== */
+.editing-slider-sec {
+  padding: 100px 0;
+  background: var(--navy);
+}
+.ba-slider-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  height: 500px;
+  margin: 40px auto 0 auto;
+  border-radius: var(--r2);
+  border: 1px solid rgba(201,165,90,0.2);
+  box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+  overflow: hidden;
+  user-select: none;
+}
+@media (max-width: 768px) {
+  .ba-slider-container {
+    height: 350px;
+  }
+}
+.ba-image-after, .ba-image-before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+.ba-image-before {
+  width: 50%;
+  filter: saturate(0.35) contrast(0.85) brightness(0.9) sepia(0.08); /* Simulates raw photo state */
+  border-right: 2px solid var(--gold);
+}
+.ba-slider-range {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: ew-resize;
+  z-index: 10;
+}
+.ba-slider-handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 100%;
+  background: var(--gold);
+  pointer-events: none;
+  z-index: 5;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ba-slider-handle::after {
+  content: '';
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  background: var(--gold);
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.ba-arrow-left, .ba-arrow-right {
+  position: absolute;
+  font-size: 0.65rem;
+  color: var(--black);
+  font-weight: 700;
+  z-index: 6;
+}
+.ba-arrow-left { transform: translateX(-9px); }
+.ba-arrow-right { transform: translateX(9px); }
+
+.ba-label {
+  position: absolute;
+  bottom: 20px;
+  padding: 6px 14px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--r1);
+  color: var(--white);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 4;
+  pointer-events: none;
+}
+.label-before { left: 20px; }
+.label-after { right: 20px; }
+
 /* ==============================================
    TESTIMONIALS
    ============================================== */

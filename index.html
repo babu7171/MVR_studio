@@ -687,6 +687,38 @@
   </div>
 </section>
 
+<!-- ══ EDITING COMPARISON (BEFORE / AFTER) ════════════════ -->
+<section class="editing-slider-sec">
+  <div class="wrap">
+    <div class="sec-hd rv">
+      <div class="stag">The Art of Editing</div>
+      <h2 class="sh2">Signature <em>Retouching</em></h2>
+      <p class="sdesc">Drag the slider to see how we transform flat RAW camera images into vibrant, golden-hour masterpieces.</p>
+    </div>
+    
+    <div class="ba-slider-container">
+      <!-- After Image (Color & Vibrant) -->
+      <div class="ba-image-after" style="background-image: url('gallery-wedding2.png');"></div>
+      
+      <!-- Before Image (Simulated RAW camera flat capture) -->
+      <div class="ba-image-before" id="baImageBefore" style="background-image: url('gallery-wedding2.png');"></div>
+      
+      <!-- Slider Handle Bar -->
+      <div class="ba-slider-handle" id="baHandle">
+        <span class="ba-arrow-left">◀</span>
+        <span class="ba-arrow-right">▶</span>
+      </div>
+
+      <!-- Invisible Range Slider -->
+      <input type="range" min="0" max="100" value="50" class="ba-slider-range" id="baRange" aria-label="Before and After Comparison Slider"/>
+
+      <!-- Labels -->
+      <span class="ba-label label-before">RAW Capture</span>
+      <span class="ba-label label-after">MVR Signature Edit</span>
+    </div>
+  </div>
+</section>
+
 <!-- ══ TESTIMONIALS ══════════════════════════════════════ -->
 <section id="testimonials" class="testimonials">
   <div class="wrap">
@@ -1059,7 +1091,7 @@
 </a>
 
 
-<script src="script.js?v=2.1" charset="utf-8"></script>
+<script src="script.js?v=2.2" charset="utf-8"></script>
 <script>
 /* ── GALLERY MODAL ─────────────────────────── */
 (function(){
