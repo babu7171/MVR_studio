@@ -285,24 +285,32 @@ async function fetchDriveGalleryTree() {
   // 2. For each subfolder, list all files (images and videos)
   for (const folder of folders) {
     const fileResponse = await drive.files.list({
-      q: `'${folder.id}' in parents and (mimeType startsWith 'image/' or mimeType startsWith 'video/') and trashed = false`,
+      q: `'${folder.id}' in parents and trashed = false`,
       fields: 'files(id, name, mimeType)',
       pageSize: 1000
     });
 
+    const filteredFiles = (fileResponse.data.files || []).filter(file => 
+      file.mimeType && (file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/'))
+    );
+
     result.push({
       folderName: folder.name,
-      files: fileResponse.data.files || []
+      files: filteredFiles
     });
   }
 
   // 3. Also get files from root folder
   const rootFilesResponse = await drive.files.list({
-    q: `'${rootFolderId}' in parents and (mimeType startsWith 'image/' or mimeType startsWith 'video/') and trashed = false`,
+    q: `'${rootFolderId}' in parents and trashed = false`,
     fields: 'files(id, name, mimeType)',
     pageSize: 1000
   });
-  const rootFiles = rootFilesResponse.data.files || [];
+  
+  const rootFiles = (rootFilesResponse.data.files || []).filter(file => 
+    file.mimeType && (file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/'))
+  );
+
   if (rootFiles.length > 0) {
     result.push({
       folderName: 'Uncategorized',
